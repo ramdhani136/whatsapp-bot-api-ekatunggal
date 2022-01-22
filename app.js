@@ -16,7 +16,7 @@ io = socketIO(server);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload({ debug: true }));
-const port = 3000;
+const port = 5000;
 
 const SESSION_FILE_PATH = "./waSession.json";
 let sessionCfg;
