@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>WhatsappBot Ekatunggal</title>
+  </head>
+  <body>
+    <div id="app">
+      <h1>Whatsapp API</h1>
+      <p>Powered by IT Ekatungggal</p>
+      <img src="" alt="QRCODE" id="qrcode" />
+      <h3>Logs :</h3>
+      <ul class="logs"></ul>
+    </div>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+      integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js"
+      integrity="sha512-iqRVtNB+t9O+epcgUTIPF+nklypcR23H1yR1NFM9kffn6/iBhZ9bTB6oKLaGMv8JE9UgjcwfBFg/eHC/VMws+g=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script>
+      $(document).ready(function () {
+        // var socket = io.connect("http://localhost:3000/", {
+        //   path: "/socket.io",
+        // });
+        var socket = io();
+
+        socket.on("message", (msg) => {
+          $(".logs").append($("<li>").text(msg));
+        });
+
+        socket.on("qr", (src) => {
+          $("#qrcode").attr("src", src);
+        });
+
+        socket.on("ready", (src) => {
+          $("#qrcode").hide();
+        });
+
+        socket.on("authenticated", (src) => {
+          $("#qrcode").hide();
+        });
+      });
+    </script>
+  </body>
+</html>
