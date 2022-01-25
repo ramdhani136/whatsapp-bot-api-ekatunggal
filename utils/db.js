@@ -19,4 +19,6 @@ const getReplay = async (keyword) => {
   return false;
 };
 
+const insertContact = async (contact) => {};
+
 module.exports = { getReplay, createConnection };

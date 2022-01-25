@@ -69,6 +69,7 @@ const createSession = (id, description) => {
     const replayMessage = await getReplay(keyword);
     if (replayMessage !== false) {
       msg.reply(replayMessage);
+      msg.reply(`Nomor hp kamu adalah : ${msg.from}`);
     }
     // if (msg.body == "!ping") {
     //   msg.reply("pong");
