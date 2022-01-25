@@ -1,13 +1,12 @@
 const { Client, MessageMedia } = require("whatsapp-web.js");
 const express = require("express");
-const { body, validationResult } = require("express-validator");
 const socketIO = require("socket.io");
 const qrcode = require("qrcode");
 const fs = require("fs");
 const http = require("http");
 const { phoneNumberFormatter } = require("./utils/formatter");
-const fileUpload = require("express-fileupload");
 const axios = require("axios");
+const { readSession, saveSession, removeSession } = require("./helper/db");
 
 const app = express();
 const server = http.createServer(app);
@@ -15,80 +14,77 @@ const server = http.createServer(app);
 io = socketIO(server);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(fileUpload({ debug: true }));
-const port = process.env.PORT || 3000;
 
-const SESSION_FILE_PATH = "./waSession.json";
-let sessionCfg;
-if (fs.existsSync(SESSION_FILE_PATH)) {
-  sessionCfg = require(SESSION_FILE_PATH);
-}
+const port = process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
   res.sendFile("./view/index.html", { root: __dirname });
-  //   res.status(200).json({ status: true, message: "Hello World" });
 });
 
-const client = new Client({
-  puppeteer: {
-    headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-accelerated-2d-canvas",
-      "--no-first-run",
-      "--no-zygote",
-      "--single-process",
-      "--disable-gpu",
-    ],
-  },
-  session: sessionCfg,
-});
+const session = [];
+const SESSION_FILE = "./whatsapp-sessions.json";
 
-client.on("message", (msg) => {
-  if (msg.body == "!ping") {
-    msg.reply("pong");
-  } else if (msg.body.toLowerCase() == "good morning") {
-    msg.reply("Selamat Pagi");
-  } else if (msg.body == "daftar") {
-    msg.reply("Masukan nama anda");
-    if (msg.body != "") {
-      msg.reply(`Nama kamu ${msg.body}`);
+const setSessionFile = (session) => {
+  fs.writeFile(SESSION_FILE, JSON.stringify(session), (err) => {
+    if (err) {
+      console.error(err);
     }
+  });
+};
+
+const getSessionfile = () => {
+  return JSON.parse(fs.readFileSync(SESSION_FILE));
+};
+
+const createSession = (id, description, name) => {
+  const SESSION_FILE_PATH = `./waSession-${id}.json`;
+  let sessionCfg;
+  if (fs.existsSync(SESSION_FILE_PATH)) {
+    sessionCfg = require(SESSION_FILE_PATH);
   }
-});
 
-client.initialize();
+  const client = new Client({
+    puppeteer: {
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-accelerated-2d-canvas",
+        "--no-first-run",
+        "--no-zygote",
+        "--single-process",
+        "--disable-gpu",
+      ],
+    },
+    session: sessionCfg,
+  });
 
-io.on("connection", (socket) => {
-  socket.emit("message", "Connection ...");
+  client.initialize();
 
   client.on("qr", (qr) => {
     console.log(`QR RECEIVED ${qr}`);
     qrcode.toDataURL(qr, (err, url) => {
-      socket.emit("qr", url);
-      socket.emit("message", "QR Code received,scan please ..");
+      io.emit("qr", { name: name, src: url });
+      io.emit("message", {
+        name: name,
+        text: "QR Code received,scan please ..",
+      });
     });
   });
 
-  client.on("qr", (qr) => {
-    // Generate and scan this code with your phone
-    console.log("QR RECEIVED", qr);
-    socket.emit("qr", qr);
-    socket.emit("message", "QR Code received,scan please ..");
-    //   qrcode.generate(qr);
-  });
-
   client.on("ready", () => {
-    socket.emit("ready", "Whatsapp is authenticated!");
-    socket.emit("message", "Whatsapp is authenticated!");
+    io.emit("ready", { name: name });
+    io.emit("message", { name: name, text: "Whatsapp is ready!" });
+    const savedSession = getSessionfile();
+    const sessionIndex = savedSession.findIndex((sess) => sess.id == id);
+    savedSession[sessionIndex].ready = true;
+    setSessionFile(savedSession);
   });
 
   client.on("authenticated", (session) => {
-    socket.emit("authenticated", "Whatsapp is authenticated!");
-    socket.emit("message", "Whatsapp is authenticated!");
-    console.log("AUTHENTICATED", session);
+    io.emit("authenticated", { id: id });
+    io.emit("message", { id: id, text: "Whatsapp is authenticated!" });
     sessionCfg = session;
     fs.writeFile(SESSION_FILE_PATH, JSON.stringify(session), function (err) {
       if (err) {
@@ -96,117 +92,90 @@ io.on("connection", (socket) => {
       }
     });
   });
-});
 
-// Cek nomor sudah terdaftar wa
-const checkRegisteredNumber = async (number) => {
-  const isRegistered = await client.isRegisteredUser(number);
-  return isRegistered;
+  client.on("auth_failure", (session) => {
+    io.emit("message", { name: name, text: "Auth eror ,restarting..." });
+  });
+
+  client.on("disconnected", (reason) => {
+    io.emit("message", { name: name, text: "Whatsapp is disconnected!" });
+    fs.unlinkSync(SESSION_FILE_PATH, function (err) {
+      if (err) return console.error(err);
+      console.log("Session file deleted");
+    });
+    client.destroy();
+    client.initialize();
+    // Menghapus pada file session
+    const savedSession = getSessionfile();
+    const sessionIndex = savedSession.findIndex((sess) => sess.id == id);
+    savedSession.splice(sessionIndex, 1);
+    setSessionFile(savedSession);
+  });
+
+  // Tambahkan client ke session
+  session.push({
+    id: id,
+    description: description,
+    client: client,
+  });
+  // Menambahkan session ke file
+  const savedSession = getSessionfile();
+  const sessionIndex = savedSession.findIndex((sess) => sess.id == id);
+
+  if (sessionIndex == -1) {
+    savedSession.push({ id: id, description: description, ready: false });
+    setSessionFile(savedSession);
+  }
 };
 
-// Mengirim pesan
-app.post(
-  "/sendMessage",
-  [body("number").notEmpty(), body("message").notEmpty()],
-  async (req, res) => {
-    const errors = validationResult(req).formatWith(({ msg }) => {
-      return msg;
-    });
-    if (!errors.isEmpty()) {
-      return res.status(422).json({ status: false, message: errors.mapped() });
-    }
-    const number = phoneNumberFormatter(req.body.number);
-    const message = req.body.message;
+// (async () => {
+//   const savedSession = await readSession();
+//   console.log(savedSession);
+// })();
 
-    isRegisteredNumber = await checkRegisteredNumber(number);
-
-    if (!isRegisteredNumber) {
-      return res
-        .status(402)
-        .json({ status: false, message: "The number is not registered" });
-    }
-    client
-      .sendMessage(number, message)
-      .then((response) => {
-        res.status(200).json({ status: true, response: response });
-      })
-      .catch((err) => {
-        res.status(500).json({ status: false, response: err });
+const init = async (socket) => {
+  // const savedSession = getSessionfile();
+  const savedSession = await readSession();
+  if (savedSession.length > 0) {
+    if (socket) {
+      socket.emit("init", savedSession);
+    } else {
+      savedSession.forEach((sess) => {
+        createSession(sess.id, sess.deskripsi, sess.name);
       });
+    }
   }
-);
+};
+
+init();
+
+io.on("connection", (socket) => {
+  init(socket);
+  // socket.on("create-session", (data) => {
+  //   console.log("Create Session " + data.name);
+  //   createSession(data.id, data.description, data.name);
+  // });
+});
+
+// Mengirim pesan
+app.post("/sendMessage", (req, res) => {
+  const sender = req.body.sender;
+  const number = phoneNumberFormatter(req.body.number);
+  const message = req.body.message;
+
+  const client = session.find((sess) => sess.id == sender).client;
+
+  console.log(client);
+  client
+    .sendMessage(number, message)
+    .then((response) => {
+      res.status(200).json({ status: true, response: response });
+    })
+    .catch((err) => {
+      res.status(500).json({ status: false, response: err });
+    });
+});
 // end message
-
-// Send media
-
-// with link
-app.post("/sendMediaLink", async (req, res) => {
-  const number = phoneNumberFormatter(req.body.number);
-  const caption = req.body.caption;
-  const fileUrl = req.body.file;
-
-  // menggunakan form link
-  let mimetype;
-  const attachment = await axios
-    .get(fileUrl, { responseType: "arraybuffer" })
-    .then((response) => {
-      mimetype = response.headers["content-type"];
-      return response.data.toString("base64");
-    });
-  const media = new MessageMedia(mimetype, attachment, "Media");
-
-  client
-    .sendMessage(number, media, { caption: caption })
-    .then((response) => {
-      res.status(200).json({ status: true, response: response });
-    })
-    .catch((err) => {
-      res.status(500).json({ status: false, response: err });
-    });
-});
-
-// with lokal file
-app.post("/sendMediaLokal", async (req, res) => {
-  const number = phoneNumberFormatter(req.body.number);
-  const caption = req.body.caption;
-  const fileUrl = req.body.file;
-  // mengambil dari img lokal
-  const media = MessageMedia.fromFilePath("./assets/img/etm.png");
-
-  client
-    .sendMessage(number, media, { caption: caption })
-    .then((response) => {
-      res.status(200).json({ status: true, response: response });
-    })
-    .catch((err) => {
-      res.status(500).json({ status: false, response: err });
-    });
-});
-
-// with attach file form data
-app.post("/sendMediaAttach", async (req, res) => {
-  const number = phoneNumberFormatter(req.body.number);
-  const caption = req.body.caption;
-
-  // mengambil file dri form
-  const file = req.files.file;
-  const media = new MessageMedia(
-    file.mimetype,
-    file.data.toString("base64"),
-    file.name
-  );
-
-  client
-    .sendMessage(number, media, { caption: caption })
-    .then((response) => {
-      res.status(200).json({ status: true, response: response });
-    })
-    .catch((err) => {
-      res.status(500).json({ status: false, response: err });
-    });
-});
-
-// end send media
 
 server.listen(port, () => {
   console.log(`Listening port : ${port}`);
