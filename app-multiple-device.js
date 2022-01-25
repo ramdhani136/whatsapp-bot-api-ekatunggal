@@ -7,6 +7,7 @@ const http = require("http");
 const { phoneNumberFormatter } = require("./utils/formatter");
 const axios = require("axios");
 const { json } = require("express/lib/response");
+const { getReplay } = require("./utils/db");
 
 const app = express();
 const server = http.createServer(app);
@@ -18,7 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 const port = process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
-  res.sendFile("./view/indexmulti.html", { root: __dirname });
+  res.sendFile("./view/index.html", { root: __dirname });
 });
 
 const session = [];
@@ -62,6 +63,24 @@ const createSession = (id, description) => {
   });
 
   client.initialize();
+
+  client.on("message", async (msg) => {
+    keyword = msg.body.toLocaleLowerCase();
+    const replayMessage = await getReplay(keyword);
+    if (replayMessage !== false) {
+      msg.reply(replayMessage);
+    }
+    // if (msg.body == "!ping") {
+    //   msg.reply("pong");
+    // } else if (msg.body.toLowerCase() == "good morning") {
+    //   msg.reply("Selamat Pagi");
+    // } else if (msg.body == "daftar") {
+    //   msg.reply("Masukan nama anda");
+    //   if (msg.body != "") {
+    //     msg.reply(`Nama kamu ${msg.body}`);
+    //   }
+    // }
+  });
 
   client.on("qr", (qr) => {
     console.log(`QR RECEIVED ${qr}`);
