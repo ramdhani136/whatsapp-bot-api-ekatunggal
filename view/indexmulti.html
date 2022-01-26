@@ -63,61 +63,62 @@
         var socket = io();
         // Ketika button tambah di klik
         $(".add-client-btn").click(function () {
-          var clientID = $("#client-id").val();
+          var clientName = $("#client-id").val();
           var clientDescription = $("#client-description").val();
           var template = $(".client")
             .first()
             .clone()
             .removeClass("hide")
-            .addClass(clientID);
-          template.find(".title").html(clientID);
+            .addClass(clientName);
+          template.find(".title").html(clientName);
           template.find(".description").html(clientDescription);
           $(".client-container").append(template);
 
           socket.emit("create-session",{
-          id:clientID,
+          name:clientName,
           description:clientDescription,
         })
         });     
 
 
         socket.on('init',(data)=>{
+          console.log(data)
           for(var i=0;i<data.length;i++){
             var session = data[i]
-            var clientID = session.id
-            var clientDescription = session.description;
+            var clientName = session.name
+            var clientDescription = session.deskripsi;
             var template = $(".client")
               .first()
               .clone()
               .removeClass("hide")
-              .addClass(clientID);
-            template.find(".title").html(clientID);
+              .addClass(clientName);
+            template.find(".title").html(clientName);
             template.find(".description").html(clientDescription);
             $(".client-container").append(template);
 
             if(session.ready){
-              $(`.client.${session.id} .logs`).append($("<li>").text("Whatsapp is ready .."));
+              $(`.client.${session.name} .logs`).append($("<li>").text("Whatsapp is ready .."));
             }else{
-              $(`.client.${session.id} .logs`).append($("<li>").text("Connecting ..."));
+              $(`.client.${session.name} .logs`).append($("<li>").text("Connecting ..."));
             }
           }
         })
 
         socket.on("message", (data) => {
-          $(`.client.${data.id} .logs`).append($("<li>").text(data.text));
+          $(`.client.${data.name} .logs`).append($("<li>").text(data.text));
         });
 
         socket.on("qr", (data) => {
-          $(`.client.${data.id} #qrcode`).attr("src", data.src);
-          $(`.client.${data.id} #qrcode`).show()
+          $(`.client.${data.name} #qrcode`).attr("src", data.src);
+          $(`.client.${data.name} #qrcode`).show()
         });
 
         socket.on("ready", (data) => {
-          $(`.client.${data.id} #qrcode`).hide();
+          $(`.client.${data.name} #qrcode`).hide();
         });
 
         socket.on("authenticated", (data) => {
-          $(`.client.${data.id} #qrcode`).hide();
+          $(`.client.${data.name} #qrcode`).hide();
         });
       });
     </script>

@@ -25,7 +25,7 @@ const readSession = async () => {
 
 const saveSession = (session) => {
   client.query(
-    "INSERT INTO wa_sessions (session) VALUES($1)",
+    "INSERT INTO sessions (session) VALUES($1)",
     [session],
     (err, result) => {
       if (err) {
@@ -38,7 +38,7 @@ const saveSession = (session) => {
 };
 
 const removeSession = () => {
-  client.query("DELETE FROM wa_sessions", (err, result) => {
+  client.query("DELETE FROM sessions", (err, result) => {
     if (err) {
       console.error("Failed to remove session!", err);
     } else {
@@ -47,4 +47,18 @@ const removeSession = () => {
   });
 };
 
-module.exports = { readSession, saveSession, removeSession };
+const updateSession = async (ready, id) => {
+  client.query(
+    "UPDATE sessions SET ready=$1 WHERE id=$2",
+    [ready, id],
+    (err, result) => {
+      if (err) {
+        console.error("Failed to update session!", err);
+      } else {
+        console.log("Session update");
+      }
+    }
+  );
+};
+
+module.exports = { readSession, saveSession, removeSession, updateSession };

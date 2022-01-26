@@ -6,7 +6,7 @@ const fs = require("fs");
 const http = require("http");
 const { phoneNumberFormatter } = require("./utils/formatter");
 const axios = require("axios");
-const { json } = require("express/lib/response");
+const { readSession, updateSession } = require("./helper/db");
 
 const app = express();
 const server = http.createServer(app);
@@ -36,8 +36,8 @@ const getSessionfile = () => {
   return JSON.parse(fs.readFileSync(SESSION_FILE));
 };
 
-const createSession = (id, description) => {
-  console.log("create session" + id);
+const createSession = (id, name, description) => {
+  console.log("create session" + name);
   const SESSION_FILE_PATH = `./waSession-${id}.json`;
   let sessionCfg;
   if (fs.existsSync(SESSION_FILE_PATH)) {
@@ -66,23 +66,24 @@ const createSession = (id, description) => {
   client.on("qr", (qr) => {
     console.log(`QR RECEIVED ${qr}`);
     qrcode.toDataURL(qr, (err, url) => {
-      io.emit("qr", { id: id, src: url });
-      io.emit("message", { id: id, text: "QR Code received,scan please .." });
+      io.emit("qr", { name: name, src: url });
+      io.emit("message", {
+        name: name,
+        text: "QR Code received,scan please ..",
+      });
     });
   });
 
   client.on("ready", () => {
-    io.emit("ready", { id: id });
-    io.emit("message", { id: id, text: "Whatsapp is ready!" });
-    const savedSession = getSessionfile();
-    const sessionIndex = savedSession.findIndex((sess) => sess.id == id);
-    savedSession[sessionIndex].ready = true;
-    setSessionFile(savedSession);
+    io.emit("ready", { name: name });
+    io.emit("message", { name: name, text: "Whatsapp is ready!" });
+    updateSession(true, id);
   });
 
   client.on("authenticated", (session) => {
-    io.emit("authenticated", { id: id });
-    io.emit("message", { id: id, text: "Whatsapp is authenticated!" });
+    console.log(session);
+    io.emit("authenticated", { name: name });
+    io.emit("message", { name: name, text: "Whatsapp is authenticated!" });
     sessionCfg = session;
     fs.writeFile(SESSION_FILE_PATH, JSON.stringify(session), function (err) {
       if (err) {
@@ -92,22 +93,18 @@ const createSession = (id, description) => {
   });
 
   client.on("auth_failure", (session) => {
-    io.emit("message", { id: id, text: "Auth eror ,restarting..." });
+    io.emit("message", { name: name, text: "Auth eror ,restarting..." });
   });
 
-  client.on("disconnected", (reason) => {
-    io.emit("message", { id: id, text: "Whatsapp is disconnected!" });
+  client.on("disconnected", async (reason) => {
+    io.emit("message", { name: name, text: "Whatsapp is disconnected!" });
     fs.unlinkSync(SESSION_FILE_PATH, function (err) {
       if (err) return console.error(err);
       console.log("Session file deleted");
     });
+    updateSession(false, id);
     client.destroy();
     client.initialize();
-    // Menghapus pada file session
-    const savedSession = getSessionfile();
-    const sessionIndex = savedSession.findIndex((sess) => sess.id == id);
-    savedSession.splice(sessionIndex, 1);
-    setSessionFile(savedSession);
   });
 
   // Tambahkan client ke session
@@ -126,14 +123,16 @@ const createSession = (id, description) => {
   }
 };
 
-const init = (socket) => {
-  const savedSession = getSessionfile();
+const init = async (socket) => {
+  // const savedSession = getSessionfile();
+  const savedSession = await readSession();
   if (savedSession.length > 0) {
     if (socket) {
       socket.emit("init", savedSession);
     } else {
+      // Menambahkan data akun
       savedSession.forEach((sess) => {
-        createSession(sess.id, sess.description);
+        createSession(sess.id, sess.name, sess.description);
       });
     }
   }
@@ -144,15 +143,9 @@ init();
 io.on("connection", (socket) => {
   init(socket);
   socket.on("create-session", (data) => {
-    console.log("Create Session " + data.id);
-    createSession(data.id, data.description, io);
+    createSession(data.id, data.name, data.description);
   });
 });
-
-// io.on("connection", (socket) => {
-//   socket.emit("message", "Connection ...");
-
-// });
 
 // Mengirim pesan
 app.post("/sendMessage", (req, res) => {
