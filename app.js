@@ -6,7 +6,13 @@ const fs = require("fs");
 const http = require("http");
 const { phoneNumberFormatter } = require("./utils/formatter");
 const axios = require("axios");
-const { readSession, updateSession, findSession } = require("./helper/db");
+const {
+  readSession,
+  updateSession,
+  findSession,
+  saveSession,
+  readLimit,
+} = require("./helper/db");
 const console = require("console");
 
 const app = express();
@@ -83,13 +89,7 @@ const createSession = async (id, name, description) => {
   client.on("authenticated", (session) => {
     io.emit("authenticated", { name: name });
     io.emit("message", { name: name, text: "Whatsapp is authenticated!" });
-    // updateSession(true, id, session);
-    // sessionCfg = session;
-    // fs.writeFile(SESSION_FILE_PATH, JSON.stringify(session), function (err) {
-    //   if (err) {
-    //     console.error(err);
-    //   }
-    // });
+    updateSession(true, id, session);
   });
 
   client.on("auth_failure", (session) => {
@@ -98,11 +98,12 @@ const createSession = async (id, name, description) => {
 
   client.on("disconnected", async (reason) => {
     io.emit("message", { name: name, text: "Whatsapp is disconnected!" });
-    fs.unlinkSync(SESSION_FILE_PATH, function (err) {
-      if (err) return console.error(err);
-      console.log("Session file deleted");
-    });
-    updateSession(true, id, {});
+    // fs.unlinkSync(SESSION_FILE_PATH, function (err) {
+    //   if (err) return console.error(err);
+    //   console.log("Session file deleted");
+    // });
+    updateSession(false, id, null);
+
     client.destroy();
     client.initialize();
   });
@@ -134,19 +135,28 @@ init();
 
 io.on("connection", (socket) => {
   init(socket);
+
   socket.on("create-session", (data) => {
     createSession(data.id, data.name, data.description);
   });
 });
 
-// Menambah akun
-app.post("/akun/create", (req, res) => {
-  // console.log(req.body);
+app.post("/akun/create", async (req, res) => {
+  saveSession(req.body.name, req.body.deskripsi);
+  const data = await readLimit();
+  io.emit("init", data);
+  createSession(data.id, data.name, data.description);
+  // createSession(res.id, data.name, data.description);
+  res.send("sukses");
 });
+
+// Menambah akun
+
 // End tambah akun
 
 // Mengirim pesan
-app.post("/sendMessage", (req, res) => {
+app.post("/sendMessage", async (req, res) => {
+  const dataSessions = await readSession();
   const sender = req.body.sender;
   const number = phoneNumberFormatter(req.body.number);
   const message = req.body.message;
@@ -154,6 +164,7 @@ app.post("/sendMessage", (req, res) => {
   const client = session.find((sess) => sess.id == sender).client;
 
   console.log(client);
+
   client
     .sendMessage(number, message)
     .then((response) => {

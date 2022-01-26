@@ -23,6 +23,18 @@ const readSession = async () => {
   }
 };
 
+const readLimit = async () => {
+  try {
+    const res = await client.query(
+      "SELECT * FROM sessions ORDER BY created_at DESC LIMIT 1"
+    );
+    if (res.rows.length) return res.rows[0];
+    return "";
+  } catch (err) {
+    throw err;
+  }
+};
+
 const findSession = async (id) => {
   try {
     const res = await client.query("SELECT * FROM sessions WHERE id=$1", [id]);
@@ -33,15 +45,15 @@ const findSession = async (id) => {
   }
 };
 
-const saveSession = (session) => {
+const saveSession = (name, deskripsi) => {
   client.query(
-    "INSERT INTO sessions (session) VALUES($1)",
-    [session],
+    "INSERT INTO sessions (name,deskripsi) VALUES($1,$2)",
+    [name, deskripsi],
     (err, result) => {
       if (err) {
         console.error("Failed to save session!", err);
       } else {
-        console.log("Session Saved");
+        console.log("sukses insert data");
       }
     }
   );
@@ -57,10 +69,10 @@ const removeSession = () => {
   });
 };
 
-const updateSession = async (ready, id, client) => {
+const updateSession = async (ready, id, session) => {
   client.query(
-    "UPDATE sessions SET client=$3,ready=$1 WHERE id=$2",
-    [ready, id, client],
+    "UPDATE sessions SET session=$3,ready=$1 WHERE id=$2",
+    [ready, id, session],
     (err, result) => {
       if (err) {
         console.error("Failed to update session!", err);
@@ -72,6 +84,7 @@ const updateSession = async (ready, id, client) => {
 };
 
 module.exports = {
+  readLimit,
   findSession,
   readSession,
   saveSession,
