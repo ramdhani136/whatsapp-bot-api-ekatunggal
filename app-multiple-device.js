@@ -18,7 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 const port = process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
-  res.sendFile("./view/index.html", { root: __dirname });
+  res.sendFile("./view/indexmulti.html", { root: __dirname });
 });
 
 const session = [];
