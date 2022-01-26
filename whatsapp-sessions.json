@@ -1,1 +1,1 @@
-[{"id":2,"description":"akun kedua","ready":false},{"id":1,"description":"akun utama","ready":false}]
+[{"id":"primary","description":"akun utama","ready":false},{"id":"secondary","description":"akun kedua","ready":false}]

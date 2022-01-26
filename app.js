@@ -6,7 +6,7 @@ const fs = require("fs");
 const http = require("http");
 const { phoneNumberFormatter } = require("./utils/formatter");
 const axios = require("axios");
-const { readSession, saveSession, removeSession } = require("./helper/db");
+const { json } = require("express/lib/response");
 
 const app = express();
 const server = http.createServer(app);
@@ -18,7 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 const port = process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
-  res.sendFile("./view/index.html", { root: __dirname });
+  res.sendFile("./view/indexmulti.html", { root: __dirname });
 });
 
 const session = [];
@@ -36,7 +36,8 @@ const getSessionfile = () => {
   return JSON.parse(fs.readFileSync(SESSION_FILE));
 };
 
-const createSession = (id, description, name) => {
+const createSession = (id, description) => {
+  console.log("create session" + id);
   const SESSION_FILE_PATH = `./waSession-${id}.json`;
   let sessionCfg;
   if (fs.existsSync(SESSION_FILE_PATH)) {
@@ -65,17 +66,14 @@ const createSession = (id, description, name) => {
   client.on("qr", (qr) => {
     console.log(`QR RECEIVED ${qr}`);
     qrcode.toDataURL(qr, (err, url) => {
-      io.emit("qr", { name: name, src: url });
-      io.emit("message", {
-        name: name,
-        text: "QR Code received,scan please ..",
-      });
+      io.emit("qr", { id: id, src: url });
+      io.emit("message", { id: id, text: "QR Code received,scan please .." });
     });
   });
 
   client.on("ready", () => {
-    io.emit("ready", { name: name });
-    io.emit("message", { name: name, text: "Whatsapp is ready!" });
+    io.emit("ready", { id: id });
+    io.emit("message", { id: id, text: "Whatsapp is ready!" });
     const savedSession = getSessionfile();
     const sessionIndex = savedSession.findIndex((sess) => sess.id == id);
     savedSession[sessionIndex].ready = true;
@@ -94,11 +92,11 @@ const createSession = (id, description, name) => {
   });
 
   client.on("auth_failure", (session) => {
-    io.emit("message", { name: name, text: "Auth eror ,restarting..." });
+    io.emit("message", { id: id, text: "Auth eror ,restarting..." });
   });
 
   client.on("disconnected", (reason) => {
-    io.emit("message", { name: name, text: "Whatsapp is disconnected!" });
+    io.emit("message", { id: id, text: "Whatsapp is disconnected!" });
     fs.unlinkSync(SESSION_FILE_PATH, function (err) {
       if (err) return console.error(err);
       console.log("Session file deleted");
@@ -128,20 +126,14 @@ const createSession = (id, description, name) => {
   }
 };
 
-// (async () => {
-//   const savedSession = await readSession();
-//   console.log(savedSession);
-// })();
-
-const init = async (socket) => {
-  // const savedSession = getSessionfile();
-  const savedSession = await readSession();
+const init = (socket) => {
+  const savedSession = getSessionfile();
   if (savedSession.length > 0) {
     if (socket) {
       socket.emit("init", savedSession);
     } else {
       savedSession.forEach((sess) => {
-        createSession(sess.id, sess.deskripsi, sess.name);
+        createSession(sess.id, sess.description);
       });
     }
   }
@@ -151,11 +143,16 @@ init();
 
 io.on("connection", (socket) => {
   init(socket);
-  // socket.on("create-session", (data) => {
-  //   console.log("Create Session " + data.name);
-  //   createSession(data.id, data.description, data.name);
-  // });
+  socket.on("create-session", (data) => {
+    console.log("Create Session " + data.id);
+    createSession(data.id, data.description, io);
+  });
 });
+
+// io.on("connection", (socket) => {
+//   socket.emit("message", "Connection ...");
+
+// });
 
 // Mengirim pesan
 app.post("/sendMessage", (req, res) => {
