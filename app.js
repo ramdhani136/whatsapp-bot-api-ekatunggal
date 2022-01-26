@@ -6,7 +6,8 @@ const fs = require("fs");
 const http = require("http");
 const { phoneNumberFormatter } = require("./utils/formatter");
 const axios = require("axios");
-const { readSession, updateSession } = require("./helper/db");
+const { readSession, updateSession, findSession } = require("./helper/db");
+const console = require("console");
 
 const app = express();
 const server = http.createServer(app);
@@ -36,8 +37,8 @@ const getSessionfile = () => {
   return JSON.parse(fs.readFileSync(SESSION_FILE));
 };
 
-const createSession = (id, name, description) => {
-  console.log("create session" + name);
+const createSession = async (id, name, description) => {
+  const dataSession = await findSession(id);
   const SESSION_FILE_PATH = `./waSession-${id}.json`;
   let sessionCfg;
   if (fs.existsSync(SESSION_FILE_PATH)) {
@@ -58,7 +59,7 @@ const createSession = (id, name, description) => {
         "--disable-gpu",
       ],
     },
-    session: sessionCfg,
+    session: dataSession.session,
   });
 
   client.initialize();
@@ -77,19 +78,18 @@ const createSession = (id, name, description) => {
   client.on("ready", () => {
     io.emit("ready", { name: name });
     io.emit("message", { name: name, text: "Whatsapp is ready!" });
-    updateSession(true, id);
   });
 
   client.on("authenticated", (session) => {
-    console.log(session);
     io.emit("authenticated", { name: name });
     io.emit("message", { name: name, text: "Whatsapp is authenticated!" });
-    sessionCfg = session;
-    fs.writeFile(SESSION_FILE_PATH, JSON.stringify(session), function (err) {
-      if (err) {
-        console.error(err);
-      }
-    });
+    // updateSession(true, id, session);
+    // sessionCfg = session;
+    // fs.writeFile(SESSION_FILE_PATH, JSON.stringify(session), function (err) {
+    //   if (err) {
+    //     console.error(err);
+    //   }
+    // });
   });
 
   client.on("auth_failure", (session) => {
@@ -102,7 +102,7 @@ const createSession = (id, name, description) => {
       if (err) return console.error(err);
       console.log("Session file deleted");
     });
-    updateSession(false, id);
+    updateSession(true, id, {});
     client.destroy();
     client.initialize();
   });
@@ -110,21 +110,13 @@ const createSession = (id, name, description) => {
   // Tambahkan client ke session
   session.push({
     id: id,
-    description: description,
+    name: name,
+    deksripsi: description,
     client: client,
   });
-  // Menambahkan session ke file
-  const savedSession = getSessionfile();
-  const sessionIndex = savedSession.findIndex((sess) => sess.id == id);
-
-  if (sessionIndex == -1) {
-    savedSession.push({ id: id, description: description, ready: false });
-    setSessionFile(savedSession);
-  }
 };
 
 const init = async (socket) => {
-  // const savedSession = getSessionfile();
   const savedSession = await readSession();
   if (savedSession.length > 0) {
     if (socket) {
@@ -132,7 +124,7 @@ const init = async (socket) => {
     } else {
       // Menambahkan data akun
       savedSession.forEach((sess) => {
-        createSession(sess.id, sess.name, sess.description);
+        createSession(sess.id, sess.name, sess.deskripsi);
       });
     }
   }
@@ -146,6 +138,12 @@ io.on("connection", (socket) => {
     createSession(data.id, data.name, data.description);
   });
 });
+
+// Menambah akun
+app.post("/akun/create", (req, res) => {
+  // console.log(req.body);
+});
+// End tambah akun
 
 // Mengirim pesan
 app.post("/sendMessage", (req, res) => {

@@ -61,6 +61,7 @@
     <script>
       $(document).ready(function () {
         var socket = io();
+
         // Ketika button tambah di klik
         $(".add-client-btn").click(function () {
           var clientName = $("#client-id").val();
@@ -82,7 +83,7 @@
 
 
         socket.on('init',(data)=>{
-          console.log(data)
+     
           for(var i=0;i<data.length;i++){
             var session = data[i]
             var clientName = session.name

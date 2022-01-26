@@ -23,6 +23,16 @@ const readSession = async () => {
   }
 };
 
+const findSession = async (id) => {
+  try {
+    const res = await client.query("SELECT * FROM sessions WHERE id=$1", [id]);
+    if (res.rows.length) return res.rows[0];
+    return "";
+  } catch (err) {
+    throw err;
+  }
+};
+
 const saveSession = (session) => {
   client.query(
     "INSERT INTO sessions (session) VALUES($1)",
@@ -47,10 +57,10 @@ const removeSession = () => {
   });
 };
 
-const updateSession = async (ready, id) => {
+const updateSession = async (ready, id, client) => {
   client.query(
-    "UPDATE sessions SET ready=$1 WHERE id=$2",
-    [ready, id],
+    "UPDATE sessions SET client=$3,ready=$1 WHERE id=$2",
+    [ready, id, client],
     (err, result) => {
       if (err) {
         console.error("Failed to update session!", err);
@@ -61,4 +71,10 @@ const updateSession = async (ready, id) => {
   );
 };
 
-module.exports = { readSession, saveSession, removeSession, updateSession };
+module.exports = {
+  findSession,
+  readSession,
+  saveSession,
+  removeSession,
+  updateSession,
+};
