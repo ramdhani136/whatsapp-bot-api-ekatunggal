@@ -25,7 +25,7 @@ if (fs.existsSync(SESSION_FILE_PATH)) {
 }
 
 app.get("/", (req, res) => {
-  res.sendFile("./view/index.html", { root: __dirname });
+  res.sendFile("./view/index - Copy.html", { root: __dirname });
   //   res.status(200).json({ status: true, message: "Hello World" });
 });
 
@@ -86,15 +86,16 @@ io.on("connection", (socket) => {
   });
 
   client.on("authenticated", (session) => {
-    socket.emit("authenticated", "Whatsapp is authenticated!");
-    socket.emit("message", "Whatsapp is authenticated!");
-    console.log("AUTHENTICATED", session);
-    sessionCfg = session;
-    fs.writeFile(SESSION_FILE_PATH, JSON.stringify(session), function (err) {
-      if (err) {
-        console.error(err);
-      }
-    });
+    console.log(session);
+    // socket.emit("authenticated", "Whatsapp is authenticated!");
+    // socket.emit("message", "Whatsapp is authenticated!");
+    // console.log("AUTHENTICATED", session);
+    // sessionCfg = session;
+    // fs.writeFile(SESSION_FILE_PATH, JSON.stringify(session), function (err) {
+    //   if (err) {
+    //     console.error(err);
+    //   }
+    // });
   });
 });
 
