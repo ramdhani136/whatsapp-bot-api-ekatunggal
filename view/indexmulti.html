@@ -112,6 +112,7 @@
         socket.on("qr", (data) => {
           $(`.client.${data.name} #qrcode`).attr("src", data.src);
           $(`.client.${data.name} #qrcode`).show()
+          console.log(data)
         });
 
         socket.on("ready", (data) => {

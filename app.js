@@ -18,11 +18,19 @@ const console = require("console");
 const app = express();
 const server = http.createServer(app);
 
-io = socketIO(server);
+io = socketIO(server, {
+  cors: {
+    origin: ["http://localhost:3000", "http://192.168.100.86:5000"],
+    methods: ["GET", "POST"],
+    transports: ["websocket", "polling", "flashsocket"],
+    allowedHeaders: ["react-client"],
+    credentials: true,
+  },
+});
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
 app.get("/", (req, res) => {
   res.sendFile("./view/indexmulti.html", { root: __dirname });
@@ -114,6 +122,19 @@ const createSession = async (id, name, description) => {
     name: name,
     deksripsi: description,
     client: client,
+  });
+
+  client.on("message", (msg) => {
+    if (msg.body == "!ping") {
+      msg.reply("pong");
+    } else if (msg.body.toLowerCase() == "good morning") {
+      msg.reply("Selamat Pagi");
+    } else if (msg.body == "daftar") {
+      msg.reply("Masukan nama anda");
+      if (msg.body != "") {
+        msg.reply(`Nama kamu ${msg.body}`);
+      }
+    }
   });
 };
 
