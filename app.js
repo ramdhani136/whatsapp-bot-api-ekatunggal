@@ -21,7 +21,7 @@ const server = http.createServer(app);
 
 io = socketIO(server, {
   cors: {
-    origin: ["http://localhost:3000"],
+    origin: ["http://localhost:3000", "http://localhost:5000"],
     methods: ["GET", "POST"],
     transports: ["websocket", "polling", "flashsocket"],
     allowedHeaders: ["react-client"],
@@ -30,7 +30,7 @@ io = socketIO(server, {
 });
 
 const corsOptions = {
-  origin: "http://localhost:3000",
+  origin: ["http://localhost:3000", "http://localhost:5000"],
   credentials: true, //access-control-allow-credentials:true
   optionSuccessStatus: 200,
 };
@@ -90,31 +90,31 @@ const createSession = async (id, name, description) => {
   client.on("qr", (qr) => {
     console.log(`QR RECEIVED ${qr}`);
     qrcode.toDataURL(qr, (err, url) => {
-      io.emit("qr", { name: name, src: url });
+      io.emit("qr", { id: id, src: url });
       io.emit("message", {
-        name: name,
+        id: id,
         text: "QR Code received,scan please ..",
       });
     });
   });
 
   client.on("ready", () => {
-    io.emit("ready", { name: name });
-    io.emit("message", { name: name, text: "Whatsapp is ready!" });
+    io.emit("ready", { id: id });
+    io.emit("message", { id: id, text: "Whatsapp is ready!" });
   });
 
   client.on("authenticated", (session) => {
-    io.emit("authenticated", { name: name });
-    io.emit("message", { name: name, text: "Whatsapp is authenticated!" });
+    io.emit("authenticated", { id: id });
+    io.emit("message", { id: id, text: "Whatsapp is authenticated!" });
     updateSession(true, id, session);
   });
 
   client.on("auth_failure", (session) => {
-    io.emit("message", { name: name, text: "Auth eror ,restarting..." });
+    io.emit("message", { id: id, text: "Auth eror ,restarting..." });
   });
 
   client.on("disconnected", async (reason) => {
-    io.emit("message", { name: name, text: "Whatsapp is disconnected!" });
+    io.emit("message", { id: id, text: "Whatsapp is disconnected!" });
     // fs.unlinkSync(SESSION_FILE_PATH, function (err) {
     //   if (err) return console.error(err);
     //   console.log("Session file deleted");
@@ -177,7 +177,7 @@ app.post("/akun/create", async (req, res) => {
   const data = await readSession();
   io.emit("init", data);
   createSession(data.id, data.name, data.description);
-  // createSession(res.id, data.name, data.description);
+
   res.send("sukses");
 });
 // End tambah akun
