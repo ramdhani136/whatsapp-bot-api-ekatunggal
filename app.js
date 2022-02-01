@@ -12,15 +12,15 @@ const {
   findSession,
   saveSession,
   readLimit,
+  removeSession,
 } = require("./helper/db");
-const console = require("console");
 
 const app = express();
 const server = http.createServer(app);
 
 io = socketIO(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://192.168.100.86:5000"],
+    origin: ["http://localhost:3000"],
     methods: ["GET", "POST"],
     transports: ["websocket", "polling", "flashsocket"],
     allowedHeaders: ["react-client"],
@@ -162,18 +162,25 @@ io.on("connection", (socket) => {
   });
 });
 
+// Menambah akun
 app.post("/akun/create", async (req, res) => {
-  saveSession(req.body.name, req.body.deskripsi);
-  const data = await readLimit();
+  saveSession(req.body.name, req.body.deskripsi, req.body.username);
+  const data = await readSession();
   io.emit("init", data);
   createSession(data.id, data.name, data.description);
   // createSession(res.id, data.name, data.description);
   res.send("sukses");
 });
-
-// Menambah akun
-
 // End tambah akun
+
+// Hapus Akun
+app.delete("/akun/:id", async (req, res) => {
+  removeSession(req.params.id);
+  const data = await readSession();
+  io.emit("init", data);
+  res.send("delete");
+});
+// End
 
 // Mengirim pesan
 app.post("/sendMessage", async (req, res) => {

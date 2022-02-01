@@ -45,10 +45,10 @@ const findSession = async (id) => {
   }
 };
 
-const saveSession = (name, deskripsi) => {
+const saveSession = (name, deskripsi, username) => {
   client.query(
-    "INSERT INTO sessions (name,deskripsi) VALUES($1,$2)",
-    [name, deskripsi],
+    "INSERT INTO sessions (name,deskripsi,username) VALUES($1,$2,$3)",
+    [name, deskripsi, username],
     (err, result) => {
       if (err) {
         console.error("Failed to save session!", err);
@@ -59,8 +59,8 @@ const saveSession = (name, deskripsi) => {
   );
 };
 
-const removeSession = () => {
-  client.query("DELETE FROM sessions", (err, result) => {
+const removeSession = (id) => {
+  client.query("DELETE  FROM sessions WHERE id=$1", [id], (err, result) => {
     if (err) {
       console.error("Failed to remove session!", err);
     } else {
