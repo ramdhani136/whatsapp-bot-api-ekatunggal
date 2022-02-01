@@ -6,6 +6,7 @@ const fs = require("fs");
 const http = require("http");
 const { phoneNumberFormatter } = require("./utils/formatter");
 const axios = require("axios");
+const cors = require("cors");
 const {
   readSession,
   updateSession,
@@ -27,6 +28,14 @@ io = socketIO(server, {
     credentials: true,
   },
 });
+
+const corsOptions = {
+  origin: "http://localhost:3000",
+  credentials: true, //access-control-allow-credentials:true
+  optionSuccessStatus: 200,
+};
+app.use(cors(corsOptions));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
