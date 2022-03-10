@@ -7,6 +7,7 @@ const http = require("http");
 const { phoneNumberFormatter } = require("./utils/formatter");
 const axios = require("axios");
 const cors = require("cors");
+const fileUpload = require("express-fileupload");
 const {
   readSession,
   updateSession,
@@ -15,6 +16,7 @@ const {
   readLimit,
   removeSession,
 } = require("./helper/db");
+const { reset } = require("nodemon");
 
 const app = express();
 const server = http.createServer(app);
@@ -38,6 +40,7 @@ app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(fileUpload());
 
 const port = process.env.PORT || 5000;
 
@@ -133,16 +136,20 @@ const createSession = async (id, name, description) => {
     client: client,
   });
 
-  client.on("message", (msg) => {
+  client.on("message", async (msg) => {
+    // console.log(msg);
+    const chat = await msg.getChat();
+    const contact = await msg.getContact();
     if (msg.body == "!ping") {
-      msg.reply("pong");
-    } else if (msg.body.toLowerCase() == "good morning") {
-      msg.reply("Selamat Pagi");
-    } else if (msg.body == "daftar") {
-      msg.reply("Masukan nama anda");
-      if (msg.body != "") {
-        msg.reply(`Nama kamu ${msg.body}`);
-      }
+      await msg.reply(`${contact.pushname} Selamat pagi!`);
+      const media = await MessageMedia.fromUrl(
+        "https://juser.fz-juelich.de/record/891478/files/python-2021.pdf"
+      );
+      // await chat.sendMessage(media);
+      await msg.reply(media);
+    } else if (msg.body.toLowerCase() == "tes") {
+      await msg.reply(contact.pushname);
+      // console.log(contact);
     }
   });
 };
@@ -212,6 +219,21 @@ app.post("/sendMessage", async (req, res) => {
     });
 });
 // end message
+
+// files
+app.post("/files", (req, res) => {
+  if (!req.files) return res.status(404).send("Bad Request");
+  for (let i = 0; i < req.files.file.length; i++) {
+    fs.writeFile(
+      `./assets/files/${req.files.file[i].name}`,
+      req.files.file[i].data,
+      () => {
+        console.log("File written successfully");
+      }
+    );
+  }
+  res.send("done");
+});
 
 server.listen(port, () => {
   console.log(`Listening port : ${port}`);
