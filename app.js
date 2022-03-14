@@ -235,6 +235,10 @@ app.post("/files", (req, res) => {
   res.send("done");
 });
 
+// coba mvc
+const sessionRouter = require("./routes/session");
+app.use("/coba", sessionRouter);
+
 server.listen(port, () => {
   console.log(`Listening port : ${port}`);
 });
