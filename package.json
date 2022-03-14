@@ -4,8 +4,7 @@
   "description": "bot wa ekatunggal",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon app.js",
-    "createdb": "node  ./helper/create_db.js"
+    "start": "nodemon app.js"
   },
   "keywords": [
     "wabot",

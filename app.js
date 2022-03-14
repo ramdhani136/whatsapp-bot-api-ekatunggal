@@ -8,15 +8,14 @@ const { phoneNumberFormatter } = require("./utils/formatter");
 const axios = require("axios");
 const cors = require("cors");
 const fileUpload = require("express-fileupload");
+const db = require("./models");
 const {
   readSession,
   updateSession,
   findSession,
   saveSession,
-  readLimit,
   removeSession,
 } = require("./helper/db");
-const { reset } = require("nodemon");
 
 const app = express();
 const server = http.createServer(app);
@@ -49,19 +48,19 @@ app.get("/", (req, res) => {
 });
 
 const session = [];
-const SESSION_FILE = "./whatsapp-sessions.json";
+// const SESSION_FILE = "./whatsapp-sessions.json";
 
-const setSessionFile = (session) => {
-  fs.writeFile(SESSION_FILE, JSON.stringify(session), (err) => {
-    if (err) {
-      console.error(err);
-    }
-  });
-};
+// const setSessionFile = (session) => {
+//   fs.writeFile(SESSION_FILE, JSON.stringify(session), (err) => {
+//     if (err) {
+//       console.error(err);
+//     }
+//   });
+// };
 
-const getSessionfile = () => {
-  return JSON.parse(fs.readFileSync(SESSION_FILE));
-};
+// const getSessionfile = () => {
+//   return JSON.parse(fs.readFileSync(SESSION_FILE));
+// };
 
 const createSession = async (id, name, description) => {
   const dataSession = await findSession(id);
@@ -156,12 +155,15 @@ const createSession = async (id, name, description) => {
 
 const init = async (socket) => {
   const savedSession = await readSession();
-  if (savedSession.length > 0) {
+
+  const session = await db.sessions.findAll();
+
+  if (session.length > 0) {
     if (socket) {
-      socket.emit("init", savedSession);
+      socket.emit("init", session);
     } else {
       // Menambahkan data akun
-      savedSession.forEach((sess) => {
+      session.forEach((sess) => {
         createSession(sess.id, sess.name, sess.deskripsi);
       });
     }
