@@ -181,20 +181,31 @@ io.on("connection", (socket) => {
 });
 
 // Menambah akun
-app.post("/akun/create", async (req, res) => {
-  saveSession(req.body.name, req.body.deskripsi, req.body.username);
-  const data = await readSession();
+app.post("/session/create", async (req, res) => {
+  let upl = {
+    name: req.body.name,
+    deskripsi: req.body.deskripsi,
+    username: req.body.username,
+    password: req.body.password,
+  };
+  const Session = db.sessions;
+  const session = await Session.create(upl);
+  // saveSession(req.body.name, req.body.deskripsi, req.body.username);
+  // const data = await readSession();
+  const data = await Session.findAll({});
   io.emit("init", data);
-  createSession(data.id, data.name, data.description);
-
+  createSession(session.id, session.name, session.description);
   res.send("sukses");
 });
 // End tambah akun
 
 // Hapus Akun
-app.delete("/akun/:id", async (req, res) => {
-  removeSession(req.params.id);
-  const data = await readSession();
+app.delete("/session/:id", async (req, res) => {
+  // removeSession(req.params.id);
+  const Session = db.sessions;
+  await Session.destroy({ where: { id: req.params.id } });
+  const data = await Session.findAll({});
+  // const data = await readSession();
   io.emit("init", data);
   res.send("delete");
 });
@@ -239,7 +250,7 @@ app.post("/files", (req, res) => {
 
 // coba mvc
 const sessionRouter = require("./routes/session");
-app.use("/coba", sessionRouter);
+app.use("/session", sessionRouter);
 
 server.listen(port, () => {
   console.log(`Listening port : ${port}`);
