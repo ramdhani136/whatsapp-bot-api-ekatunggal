@@ -18,6 +18,7 @@ const {
 } = require("./helper/db");
 const app = express();
 const server = http.createServer(app);
+// const io = require("./config/socket");
 
 io = socketIO(server, {
   cors: {
@@ -259,9 +260,12 @@ app.post("/files", (req, res) => {
 const sessionRouter = require("./routes/session");
 const keyRouter = require("./routes/key");
 const uriFileRouter = require("./routes/uriFile");
+const botRouter = require("./routes/bot");
+
 app.use("/session", sessionRouter);
 app.use("/key", keyRouter);
 app.use("/urifiles", uriFileRouter);
+app.use("/bots", botRouter);
 // End
 
 server.listen(port, () => {

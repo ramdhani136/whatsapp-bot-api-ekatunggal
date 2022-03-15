@@ -6,6 +6,8 @@ const create = async (req, res) => {
   let data = {
     name: req.body.name,
     id_bot: req.body.id_bot,
+    id_key: req.body.id_key,
+    key: req.body.key,
   };
 
   const urifile = await UriFile.create(data);
