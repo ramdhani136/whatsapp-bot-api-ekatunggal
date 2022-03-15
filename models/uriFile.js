@@ -1,9 +1,13 @@
 module.exports = (sequelize, DataTypes) => {
-  const Key = sequelize.define("keys", {
+  const UriFile = sequelize.define("urifiles", {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
+    },
+    id_bot: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
     name: {
       type: DataTypes.STRING,
@@ -13,5 +17,5 @@ module.exports = (sequelize, DataTypes) => {
     status: { type: DataTypes.BOOLEAN, defaultValue: 1 },
   });
 
-  return Key;
+  return UriFile;
 };

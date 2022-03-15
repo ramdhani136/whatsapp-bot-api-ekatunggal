@@ -16,7 +16,6 @@ const {
   saveSession,
   removeSession,
 } = require("./helper/db");
-
 const app = express();
 const server = http.createServer(app);
 
@@ -35,8 +34,8 @@ const corsOptions = {
   credentials: true, //access-control-allow-credentials:true
   optionSuccessStatus: 200,
 };
-app.use(cors(corsOptions));
 
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload());
@@ -259,8 +258,10 @@ app.post("/files", (req, res) => {
 // Routes
 const sessionRouter = require("./routes/session");
 const keyRouter = require("./routes/key");
+const uriFileRouter = require("./routes/uriFile");
 app.use("/session", sessionRouter);
 app.use("/key", keyRouter);
+app.use("/urifiles", uriFileRouter);
 // End
 
 server.listen(port, () => {
