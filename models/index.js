@@ -22,6 +22,7 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
 db.sessions = require("./sessionModel")(sequelize, DataTypes);
+db.keys = require("./KeyModel")(sequelize, DataTypes);
 
 db.sequelize.sync({ force: false }).then(() => {
   console.log("resync!");

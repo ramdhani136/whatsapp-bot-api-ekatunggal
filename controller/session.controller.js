@@ -1,4 +1,3 @@
-// const { Session } = require("../models/sessionModel");
 const db = require("../models");
 
 const Session = db.sessions;

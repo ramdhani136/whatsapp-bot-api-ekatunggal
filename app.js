@@ -63,7 +63,8 @@ const session = [];
 // };
 
 const createSession = async (id, name, description) => {
-  const dataSession = await findSession(id);
+  const Session = db.sessions;
+  const dataSession = await Session.findOne({ where: { id: id } });
   const SESSION_FILE_PATH = `./waSession-${id}.json`;
   let sessionCfg;
   if (fs.existsSync(SESSION_FILE_PATH)) {
@@ -105,10 +106,14 @@ const createSession = async (id, name, description) => {
     io.emit("message", { id: id, text: "Whatsapp is ready!" });
   });
 
-  client.on("authenticated", (session) => {
+  client.on("authenticated", async (session) => {
     io.emit("authenticated", { id: id });
     io.emit("message", { id: id, text: "Whatsapp is authenticated!" });
-    updateSession(true, id, session);
+    const data = { ready: 1, session: session };
+    // updateSession(true, id, session);
+
+    const Session = db.sessions;
+    await Session.update(data, { where: { id: id } });
   });
 
   client.on("auth_failure", (session) => {
@@ -121,7 +126,10 @@ const createSession = async (id, name, description) => {
     //   if (err) return console.error(err);
     //   console.log("Session file deleted");
     // });
-    updateSession(false, id, null);
+    const data = { ready: 0, session: null };
+    const Session = db.sessions;
+    // updateSession(false, id, null);
+    await Session.update(data, { where: { id: id } });
 
     client.destroy();
     client.initialize();
@@ -154,7 +162,7 @@ const createSession = async (id, name, description) => {
 };
 
 const init = async (socket) => {
-  const savedSession = await readSession();
+  // const savedSession = await readSession();
 
   const session = await db.sessions.findAll();
 
@@ -213,7 +221,7 @@ app.delete("/session/:id", async (req, res) => {
 
 // Mengirim pesan
 app.post("/sendMessage", async (req, res) => {
-  const dataSessions = await readSession();
+  // const dataSessions = await readSession();
   const sender = req.body.sender;
   const number = phoneNumberFormatter(req.body.number);
   const message = req.body.message;
@@ -248,9 +256,12 @@ app.post("/files", (req, res) => {
   res.send("done");
 });
 
-// coba mvc
+// Routes
 const sessionRouter = require("./routes/session");
+const keyRouter = require("./routes/key");
 app.use("/session", sessionRouter);
+app.use("/key", keyRouter);
+// End
 
 server.listen(port, () => {
   console.log(`Listening port : ${port}`);
