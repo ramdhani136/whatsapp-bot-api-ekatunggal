@@ -30,4 +30,24 @@ db.sequelize.sync({ force: false }).then(() => {
   console.log("resync!");
 });
 
+db.keys.hasMany(db.urifiles, {
+  foreignKey: "id_key",
+  as: "urifiles",
+});
+
+db.keys.hasMany(db.bots, {
+  foreignKey: "id_key",
+  as: "bots",
+});
+
+db.urifiles.belongsTo(db.keys, {
+  foreignKey: "id_key",
+  as: "keys",
+});
+
+db.bots.belongsTo(db.keys, {
+  foreignKey: "id_key",
+  as: "keys",
+});
+
 module.exports = db;
