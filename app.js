@@ -185,8 +185,8 @@ const createSession = async (id, name, description) => {
       await Customer.create(data);
       // msg.reply("anda user baru");
     } else {
-      //Data Dinamis
-      if (KeyReply.dataValues) {
+      // //Data Dinamis
+      if (KeyReply !== null) {
         // message
         if (KeyReply.dataValues.bots.length > 0) {
           for (let i = 0; i < KeyReply.dataValues.bots.length; i++) {
@@ -207,8 +207,10 @@ const createSession = async (id, name, description) => {
           }
         }
         // End Urlfiles
+      } else {
+        console.log("no data");
       }
-      // End Data Dinamis
+      // // End Data Dinamis
 
       // Ganti nama dan kota
       if (userTyping.substring(0, 1) == "#") {
@@ -228,21 +230,21 @@ const createSession = async (id, name, description) => {
       // Input item dipilih
       if (userTyping.substring(0, 1) == "*") {
         await Customer.update(
-          { item: userTyping.substring(1, index_) },
+          { item: userTyping.substring(1, 255) },
           { where: { phone: chat.id.user } }
         );
-        msg.reply("Kamu memilih item  : " + userTyping.substring(1, index_));
+        msg.reply("Kamu memilih item  : " + userTyping.substring(1, 255));
       }
       // End
 
       // update key aktif
       if (userTyping.substring(0, 1) == "/") {
         await Customer.update(
-          { key: userTyping.substring(1, index_) },
+          { key: userTyping.substring(1, 255) },
           { where: { phone: chat.id.user } }
         );
         msg.reply(
-          "Kamu sedang berada di menu : " + userTyping.substring(1, index_)
+          "Kamu sedang berada di menu : " + userTyping.substring(1, 255)
         );
       }
       // End
@@ -370,12 +372,14 @@ const keyRouter = require("./routes/key");
 const uriFileRouter = require("./routes/uriFile");
 const botRouter = require("./routes/bot");
 const customerRouter = require("./routes/customer");
+const menuRouter = require("./routes/menu");
 
 app.use("/session", sessionRouter);
 app.use("/key", keyRouter);
 app.use("/urifiles", uriFileRouter);
 app.use("/bots", botRouter);
 app.use("/customer", customerRouter);
+app.use("/menu", menuRouter);
 // End
 
 server.listen(port, () => {

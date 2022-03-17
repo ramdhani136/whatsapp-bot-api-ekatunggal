@@ -13,6 +13,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
+    id_menu: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    menu: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     message: {
       type: DataTypes.TEXT,
       allowNull: false,

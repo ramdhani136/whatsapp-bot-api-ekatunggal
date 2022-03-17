@@ -9,6 +9,8 @@ const create = async (req, res) => {
     key: req.body.key,
     message: req.body.message,
     status: req.body.status,
+    id_menu: req.body.id_menu,
+    menu: req.body.menu,
   };
 
   const bots = await Bots.create(data);

@@ -8,6 +8,8 @@ const create = async (req, res) => {
     id_bot: req.body.id_bot,
     id_key: req.body.id_key,
     key: req.body.key,
+    id_menu: req.body.id_menu,
+    menu: req.body.menu,
   };
 
   const urifile = await UriFile.create(data);
