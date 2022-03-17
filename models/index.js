@@ -25,6 +25,7 @@ db.sessions = require("./sessionModel")(sequelize, DataTypes);
 db.keys = require("./KeyModel")(sequelize, DataTypes);
 db.urifiles = require("./uriFile")(sequelize, DataTypes);
 db.bots = require("./bot")(sequelize, DataTypes);
+db.customers = require("./customer")(sequelize, DataTypes);
 
 db.sequelize.sync({ force: false }).then(() => {
   console.log("resync!");

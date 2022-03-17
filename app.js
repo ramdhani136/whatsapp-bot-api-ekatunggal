@@ -116,8 +116,15 @@ const createSession = async (id, name, description) => {
     await Session.update(data, { where: { id: id } });
   });
 
-  client.on("auth_failure", (session) => {
+  client.on("auth_failure", async (session) => {
     io.emit("message", { id: id, text: "Auth eror ,restarting..." });
+    const data = { ready: 0, session: null };
+    const Session = db.sessions;
+    // updateSession(false, id, null);
+    await Session.update(data, { where: { id: id } });
+
+    client.destroy();
+    client.initialize();
   });
 
   client.on("disconnected", async (reason) => {
@@ -143,21 +150,122 @@ const createSession = async (id, name, description) => {
     client: client,
   });
 
+  // Auto Reply
   client.on("message", async (msg) => {
-    // console.log(msg);
     const chat = await msg.getChat();
     const contact = await msg.getContact();
-    if (msg.body == "!ping") {
-      await msg.reply(`${contact.pushname} Selamat pagi!`);
-      const media = await MessageMedia.fromUrl(
-        "https://juser.fz-juelich.de/record/891478/files/python-2021.pdf"
-      );
-      // await chat.sendMessage(media);
-      await msg.reply(media);
-    } else if (msg.body.toLowerCase() == "tes") {
-      await msg.reply(contact.pushname);
-      // console.log(contact);
+    const Customer = db.customers;
+    const allCust = await Customer.findAll();
+    const UriFile = db.urifiles;
+    const Bots = db.bots;
+    const KeyReply = await db.keys.findOne({
+      include: [
+        {
+          model: UriFile,
+          as: "urifiles",
+        },
+        {
+          model: Bots,
+          as: "bots",
+        },
+      ],
+      where: { name: msg.body },
+    });
+
+    const userTyping = msg.body;
+    const isResult = allCust.filter((cust) => cust.phone === chat.id.user);
+    const index_ = msg.body.indexOf("_");
+
+    if (isResult.length < 1) {
+      const nama =
+        contact.verifiedName !== undefined
+          ? contact.verifiedName
+          : contact.pushname;
+      const data = { name: nama, phone: chat.id.user, key: ".home" };
+      await Customer.create(data);
+      // msg.reply("anda user baru");
+    } else {
+      //Data Dinamis
+      if (KeyReply.dataValues) {
+        // message
+        if (KeyReply.dataValues.bots.length > 0) {
+          for (let i = 0; i < KeyReply.dataValues.bots.length; i++) {
+            if (KeyReply.dataValues.bots[i].message !== "") {
+              msg.reply(KeyReply.dataValues.bots[i].message);
+            }
+          }
+        }
+        // End Message
+
+        // Urlfile
+        if (KeyReply.dataValues.urifiles.length > 0) {
+          for (let i = 0; i < KeyReply.dataValues.urifiles.length; i++) {
+            const media = await MessageMedia.fromUrl(
+              KeyReply.dataValues.urifiles[i].name
+            );
+            chat.sendMessage(media);
+          }
+        }
+        // End Urlfiles
+      }
+      // End Data Dinamis
+
+      // Ganti nama dan kota
+      if (userTyping.substring(0, 1) == "#") {
+        updateValue = {
+          name: userTyping.substring(1, index_),
+          kota: userTyping.substring(index_ + 1, 255),
+        };
+        await Customer.update(updateValue, { where: { phone: chat.id.user } });
+        msg.reply(
+          "Sekarang kami akan memanggil kamu : " +
+            userTyping.substring(1, index_)
+        );
+        msg.reply("Kota  : " + userTyping.substring(index_ + 1, 255));
+      }
+      // End Ganti Nama kota
+
+      // Input item dipilih
+      if (userTyping.substring(0, 1) == "*") {
+        await Customer.update(
+          { item: userTyping.substring(1, index_) },
+          { where: { phone: chat.id.user } }
+        );
+        msg.reply("Kamu memilih item  : " + userTyping.substring(1, index_));
+      }
+      // End
+
+      // update key aktif
+      if (userTyping.substring(0, 1) == "/") {
+        await Customer.update(
+          { key: userTyping.substring(1, index_) },
+          { where: { phone: chat.id.user } }
+        );
+        msg.reply(
+          "Kamu sedang berada di menu : " + userTyping.substring(1, index_)
+        );
+      }
+      // End
     }
+    // End AutoReply
+
+    // if (msg.body == "!ping") {
+    //   await msg.reply(`${contact.pushname} Selamat pagi!`);
+    //   const media = await MessageMedia.fromUrl(
+    //     "https://juser.fz-juelich.de/record/891478/files/python-2021.pdf"
+    //   );
+    //   // await chat.sendMessage(media);
+    //   await msg.reply(media);
+    // } else if (msg.body.toLowerCase() == "tes") {
+    //   await msg.reply(contact.pushname);
+    //   // console.log(contact);
+    // }
+  });
+
+  app.use("/logout", (req, res) => {
+    client.destroy();
+    client.initialize();
+    res.send("sukses");
   });
 };
 
@@ -261,11 +369,13 @@ const sessionRouter = require("./routes/session");
 const keyRouter = require("./routes/key");
 const uriFileRouter = require("./routes/uriFile");
 const botRouter = require("./routes/bot");
+const customerRouter = require("./routes/customer");
 
 app.use("/session", sessionRouter);
 app.use("/key", keyRouter);
 app.use("/urifiles", uriFileRouter);
 app.use("/bots", botRouter);
+app.use("/customer", customerRouter);
 // End
 
 server.listen(port, () => {
