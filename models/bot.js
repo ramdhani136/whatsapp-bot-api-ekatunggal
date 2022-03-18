@@ -28,7 +28,6 @@ module.exports = (sequelize, DataTypes) => {
     message: {
       type: DataTypes.TEXT,
       allowNull: false,
-      unique: true,
     },
     status: { type: DataTypes.BOOLEAN, defaultValue: 1 },
   });

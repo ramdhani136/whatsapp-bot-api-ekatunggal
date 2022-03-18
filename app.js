@@ -157,20 +157,13 @@ const createSession = async (id, name, description) => {
     const Customer = db.customers;
     const allCust = await Customer.findAll();
     const UriFile = db.urifiles;
-    const Bots = db.bots;
-    // const KeyReply = await db.keys.findOne({
-    //   include: [
-    //     {
-    //       model: UriFile,
-    //       as: "urifiles",
-    //     },
-    //     {
-    //       model: Bots,
-    //       as: "bots",
-    //     },
-    //   ],
-    //   where: { name: msg.body },
-    // });
+    const Keys = db.keys;
+    const Menu = db.menu;
+    const IsKey = await db.keys.findOne({ where: { name: msg.body } });
+    const IsCustomer = await Customer.findOne({
+      where: { phone: chat.id.user },
+    });
+    const menuAktif = IsCustomer.dataValues.id_menuAktif;
 
     const userTyping = msg.body;
     const isResult = allCust.filter((cust) => cust.phone === chat.id.user);
@@ -192,6 +185,53 @@ const createSession = async (id, name, description) => {
       // msg.reply("anda user baru");
     } else {
       // //Data Dinamis
+      if (IsKey !== null) {
+        console.log(IsKey.dataValues.id);
+        console.log(menuAktif);
+        const Bots = await db.bots.findAll({
+          include: [
+            {
+              model: Keys,
+              as: "key",
+            },
+            {
+              model: Keys,
+              as: "prevKey",
+            },
+            {
+              model: Menu,
+              as: "menuAktif",
+            },
+            {
+              model: Menu,
+              as: "prevMenu",
+            },
+            {
+              model: Menu,
+              as: "afterMenu",
+            },
+            {
+              model: UriFile,
+              as: "urifiles",
+            },
+          ],
+          where: { id_key: IsKey.dataValues.id, id_menuAktif: menuAktif },
+          order: [["id", "ASC"]],
+        });
+        if (Bots.length > 0) {
+          for (var i = 0; i < Bots.length; i++) {
+            msg.reply(Bots[i].dataValues.message);
+            const updateCustomer = {
+              id_menuAktif: Bots[i].id_afterMenu,
+              id_prevMenu: Bots[i].id_prevMenu,
+              id_prevKey: Bots[i].id_prevKey,
+            };
+            await Customer.update(updateCustomer, {
+              where: { phone: chat.id.user },
+            });
+          }
+        }
+      }
       // if (KeyReply !== null) {
       //   // message
       //   if (KeyReply.dataValues.bots.length > 0) {
