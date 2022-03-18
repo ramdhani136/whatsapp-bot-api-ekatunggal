@@ -32,24 +32,61 @@ db.sequelize.sync({ force: false }).then(() => {
   console.log("resync!");
 });
 
-db.keys.hasMany(db.urifiles, {
-  foreignKey: "id_key",
+// Bots
+db.bots.hasMany(db.urifiles, {
+  foreignKey: "id_bot",
   as: "urifiles",
-});
-
-db.keys.hasMany(db.bots, {
-  foreignKey: "id_key",
-  as: "bots",
-});
-
-db.urifiles.belongsTo(db.keys, {
-  foreignKey: "id_key",
-  as: "keys",
 });
 
 db.bots.belongsTo(db.keys, {
   foreignKey: "id_key",
-  as: "keys",
+  as: "key",
 });
+
+db.bots.belongsTo(db.keys, {
+  foreignKey: "id_prevKey",
+  as: "prevKey",
+});
+
+db.bots.belongsTo(db.menu, {
+  foreignKey: "id_menuAktif",
+  as: "menuAktif",
+});
+
+db.bots.belongsTo(db.menu, {
+  foreignKey: "id_prevMenu",
+  as: "prevMenu",
+});
+
+db.bots.belongsTo(db.menu, {
+  foreignKey: "id_afterMenu",
+  as: "afterMenu",
+});
+
+// End
+
+// urifiles
+db.urifiles.belongsTo(db.bots, {
+  foreignKey: "id_bot",
+  as: "bots",
+});
+// End
+
+// customer
+db.customers.belongsTo(db.menu, {
+  foreignKey: "id_menuAktif",
+  as: "menuAktif",
+});
+
+db.customers.belongsTo(db.menu, {
+  foreignKey: "id_prevMenu",
+  as: "prevMenu",
+});
+
+db.customers.belongsTo(db.keys, {
+  foreignKey: "id_prevKey",
+  as: "prevKey",
+});
+// End
 
 module.exports = db;

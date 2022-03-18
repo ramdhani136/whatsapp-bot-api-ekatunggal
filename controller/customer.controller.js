@@ -1,13 +1,17 @@
 const db = require("../models");
 
 const Customer = db.customers;
+const Keys = db.keys;
+const Menu = db.menu;
 
 const create = async (req, res) => {
   let data = {
     name: req.body.name,
     phone: req.body.phone,
     deskripsi: req.body.deskripsi,
-    key: req.body.key,
+    id_menuAktif: req.body.id_menuAktif,
+    id_prevMenu: req.body.prevMenu,
+    afterMenu: req.body.afterMenu,
     item: req.body.item,
     status: req.body.status,
   };
@@ -20,6 +24,20 @@ const create = async (req, res) => {
 const getAllCustomers = async (req, res) => {
   let customers = await Customer.findAll({
     order: [["id", "DESC"]],
+    include: [
+      {
+        model: Menu,
+        as: "menuAktif",
+      },
+      {
+        model: Menu,
+        as: "prevMenu",
+      },
+      {
+        model: Keys,
+        as: "prevKey",
+      },
+    ],
   });
   res.send(customers);
 };

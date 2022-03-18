@@ -9,22 +9,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    id_key: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    key: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    id_menu: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    menu: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
     name: {
       type: DataTypes.STRING,
       allowNull: false,

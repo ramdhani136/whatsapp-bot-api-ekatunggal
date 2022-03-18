@@ -158,19 +158,19 @@ const createSession = async (id, name, description) => {
     const allCust = await Customer.findAll();
     const UriFile = db.urifiles;
     const Bots = db.bots;
-    const KeyReply = await db.keys.findOne({
-      include: [
-        {
-          model: UriFile,
-          as: "urifiles",
-        },
-        {
-          model: Bots,
-          as: "bots",
-        },
-      ],
-      where: { name: msg.body },
-    });
+    // const KeyReply = await db.keys.findOne({
+    //   include: [
+    //     {
+    //       model: UriFile,
+    //       as: "urifiles",
+    //     },
+    //     {
+    //       model: Bots,
+    //       as: "bots",
+    //     },
+    //   ],
+    //   where: { name: msg.body },
+    // });
 
     const userTyping = msg.body;
     const isResult = allCust.filter((cust) => cust.phone === chat.id.user);
@@ -181,35 +181,41 @@ const createSession = async (id, name, description) => {
         contact.verifiedName !== undefined
           ? contact.verifiedName
           : contact.pushname;
-      const data = { name: nama, phone: chat.id.user, key: ".home" };
+      const data = {
+        name: nama,
+        phone: chat.id.user,
+        id_menuAktif: 1,
+        id_prevMenu: 1,
+        id_prevKey: 14,
+      };
       await Customer.create(data);
       // msg.reply("anda user baru");
     } else {
       // //Data Dinamis
-      if (KeyReply !== null) {
-        // message
-        if (KeyReply.dataValues.bots.length > 0) {
-          for (let i = 0; i < KeyReply.dataValues.bots.length; i++) {
-            if (KeyReply.dataValues.bots[i].message !== "") {
-              msg.reply(KeyReply.dataValues.bots[i].message);
-            }
-          }
-        }
-        // End Message
+      // if (KeyReply !== null) {
+      //   // message
+      //   if (KeyReply.dataValues.bots.length > 0) {
+      //     for (let i = 0; i < KeyReply.dataValues.bots.length; i++) {
+      //       if (KeyReply.dataValues.bots[i].message !== "") {
+      //         msg.reply(KeyReply.dataValues.bots[i].message);
+      //       }
+      //     }
+      //   }
+      //   // End Message
 
-        // Urlfile
-        if (KeyReply.dataValues.urifiles.length > 0) {
-          for (let i = 0; i < KeyReply.dataValues.urifiles.length; i++) {
-            const media = await MessageMedia.fromUrl(
-              KeyReply.dataValues.urifiles[i].name
-            );
-            chat.sendMessage(media);
-          }
-        }
-        // End Urlfiles
-      } else {
-        console.log("no data");
-      }
+      //   // Urlfile
+      //   if (KeyReply.dataValues.urifiles.length > 0) {
+      //     for (let i = 0; i < KeyReply.dataValues.urifiles.length; i++) {
+      //       const media = await MessageMedia.fromUrl(
+      //         KeyReply.dataValues.urifiles[i].name
+      //       );
+      //       chat.sendMessage(media);
+      //     }
+      //   }
+      //   // End Urlfiles
+      // } else {
+      //   console.log("no data");
+      // }
       // // End Data Dinamis
 
       // Ganti nama dan kota
@@ -238,15 +244,15 @@ const createSession = async (id, name, description) => {
       // End
 
       // update key aktif
-      if (userTyping.substring(0, 1) == "/") {
-        await Customer.update(
-          { key: userTyping.substring(1, 255) },
-          { where: { phone: chat.id.user } }
-        );
-        msg.reply(
-          "Kamu sedang berada di menu : " + userTyping.substring(1, 255)
-        );
-      }
+      // if (userTyping.substring(0, 1) == "/") {
+      //   await Customer.update(
+      //     { key: userTyping.substring(1, 255) },
+      //     { where: { phone: chat.id.user } }
+      //   );
+      //   msg.reply(
+      //     "Kamu sedang berada di menu : " + userTyping.substring(1, 255)
+      //   );
+      // }
       // End
     }
     // End AutoReply

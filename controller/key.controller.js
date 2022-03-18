@@ -1,8 +1,8 @@
 const db = require("../models");
 
 const Keys = db.keys;
-const UriFile = db.urifiles;
-const Bots = db.bots;
+// const UriFile = db.urifiles;
+// const Bots = db.bots;
 
 const create = async (req, res) => {
   let data = {
@@ -38,23 +38,23 @@ const deleteKey = async (req, res) => {
   res.status(200).send("keys is deleted");
 };
 
-const getKeyUrlFiles = async (req, res) => {
-  const data = await Keys.findAll({
-    include: [
-      {
-        model: UriFile,
-        as: "urifiles",
-      },
-      {
-        model: Bots,
-        as: "bots",
-      },
-    ],
-    order: [["name", "ASC"]],
-  });
+// const getKeyUrlFiles = async (req, res) => {
+//   const data = await Keys.findAll({
+// include: [
+//   {
+//     model: UriFile,
+//     as: "urifiles",
+//   },
+//   {
+//     model: Bots,
+//     as: "bots",
+//   },
+// ],
+//     order: [["name", "ASC"]],
+//   });
 
-  res.status(200).send(data);
-};
+//   res.status(200).send(data);
+// };
 
 module.exports = {
   create,
@@ -62,5 +62,5 @@ module.exports = {
   getOneKey,
   updateKey,
   deleteKey,
-  getKeyUrlFiles,
+  // getKeyUrlFiles,
 };

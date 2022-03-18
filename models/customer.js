@@ -22,9 +22,17 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    key: {
-      type: DataTypes.STRING,
-      allowNull: true,
+    id_menuAktif: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    id_prevMenu: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    id_prevKey: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
     item: {
       type: DataTypes.STRING,

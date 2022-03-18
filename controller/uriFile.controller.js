@@ -1,15 +1,12 @@
 const db = require("../models");
 
 const UriFile = db.urifiles;
+const Bots = db.bots;
 
 const create = async (req, res) => {
   let data = {
     name: req.body.name,
     id_bot: req.body.id_bot,
-    id_key: req.body.id_key,
-    key: req.body.key,
-    id_menu: req.body.id_menu,
-    menu: req.body.menu,
   };
 
   const urifile = await UriFile.create(data);
@@ -17,7 +14,14 @@ const create = async (req, res) => {
 };
 
 const getAllUri = async (req, res) => {
-  let urifile = await UriFile.findAll({});
+  let urifile = await UriFile.findAll({
+    include: [
+      {
+        model: Bots,
+        as: "bots",
+      },
+    ],
+  });
   res.send(urifile);
 };
 
