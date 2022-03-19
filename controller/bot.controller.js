@@ -51,7 +51,7 @@ const getAllBots = async (req, res) => {
         as: "urifiles",
       },
     ],
-    order: [["id", "DESC"]],
+    order: [["id_menuAktif", "ASC"]],
   });
   res.send(bots);
 };

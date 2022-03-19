@@ -14,7 +14,13 @@ const axios = require("axios");
 const cors = require("cors");
 const fileUpload = require("express-fileupload");
 const db = require("./models");
-
+const {
+  readSession,
+  updateSession,
+  findSession,
+  saveSession,
+  removeSession,
+} = require("./helper/db");
 const app = express();
 const server = http.createServer(app);
 // const io = require("./config/socket");
@@ -46,49 +52,38 @@ app.get("/", (req, res) => {
   res.sendFile("./view/indexmulti.html", { root: __dirname });
 });
 
+const session = [];
+// const SESSION_FILE = "./whatsapp-sessions.json";
+
+// const setSessionFile = (session) => {
+//   fs.writeFile(SESSION_FILE, JSON.stringify(session), (err) => {
+//     if (err) {
+//       console.error(err);
+//     }
+//   });
+// };
+
+// const getSessionfile = () => {
+//   return JSON.parse(fs.readFileSync(SESSION_FILE));
+// };
+
 const createSession = async (id) => {
   const Session = db.sessions;
   const dataSession = await Session.findOne({ where: { id: id } });
 
-  // const client = new Client({
-  //   puppeteer: {
-  //     headless: true,
-  //     args: [
-  //       "--no-sandbox",
-  //       "--disable-setuid-sandbox",
-  //       "--disable-dev-shm-usage",
-  //       "--disable-accelerated-2d-canvas",
-  //       "--no-first-run",
-  //       "--no-zygote",
-  //       "--single-process",
-  //       "--disable-gpu",
-  //     ],
-  //   },
-  //   authStrategy: new LocalAuth({ clientId: id }),
-  // });
-
-  const sessionSave = JSON.parse(dataSession.dataValues.session);
-  const client = new Client({
-    restartOnAuthFail: true,
-    puppeteer: {
-      headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-accelerated-2d-canvas",
-        "--no-first-run",
-        "--no-zygote",
-        "--single-process",
-        "--disable-gpu",
-      ],
-    },
-    authStrategy: new LegacySessionAuth({
-      session: sessionSave, // saved session object
-    }),
+  const authStrategy = await new LegacySessionAuth({
+    session: dataSession.dataValues.session,
+    restartOnAuthFail: false,
   });
 
+  const client = await new Client({
+    authStrategy,
+  });
   client.initialize();
+
+  console.log("HHHHHH");
+  console.log(id);
+  console.log(dataSession.dataValues.session);
 
   client.on("qr", (qr) => {
     console.log(`QR RECEIVED ${qr}`);
@@ -110,13 +105,30 @@ const createSession = async (id) => {
     io.emit("authenticated", { id: id });
     io.emit("message", { id: id, text: "Whatsapp is authenticated!" });
     const data = { ready: 1, session: session };
+    // updateSession(true, id, session);
+
     const Session = db.sessions;
     await Session.update(data, { where: { id: id } });
   });
 
-  client.on("auth_failure", async (session) => {
+  client.on("auth_failure", (session) => {
     io.emit("message", { id: id, text: "Auth eror ,restarting..." });
 
+    const data = { ready: 0, session: null };
+    const Session = db.sessions;
+    // updateSession(false, id, null);
+    // await Session.update(data, { where: { id: id } });
+
+    // client.destroy();
+    // client.initialize();
+  });
+
+  client.on("disconnected", async (reason) => {
+    io.emit("message", { id: id, text: "Whatsapp is disconnected!" });
+    // fs.unlinkSync(SESSION_FILE_PATH, function (err) {
+    //   if (err) return console.error(err);
+    //   console.log("Session file deleted");
+    // });
     const data = { ready: 0, session: null };
     const Session = db.sessions;
     // updateSession(false, id, null);
@@ -126,17 +138,15 @@ const createSession = async (id) => {
     client.initialize();
   });
 
-  client.on("disconnected", async (reason) => {
-    io.emit("message", { id: id, text: "Whatsapp is disconnected!" });
-    const data = { ready: 0, session: null };
-    const Session = db.sessions;
-    await Session.update(data, { where: { id: id } });
+  // Tambahkan client ke session
+  // session.push({
+  //   id: id,
+  //   name: name,
+  //   deksripsi: description,
+  //   client: client,
+  // });
 
-    client.destroy();
-    client.initialize();
-  });
-
-  // AutoReply
+  // Auto Reply
   client.on("message", async (msg) => {
     const chat = await msg.getChat();
     const contact = await msg.getContact();
@@ -224,6 +234,31 @@ const createSession = async (id) => {
           }
         }
       }
+      // if (KeyReply !== null) {
+      //   // message
+      //   if (KeyReply.dataValues.bots.length > 0) {
+      //     for (let i = 0; i < KeyReply.dataValues.bots.length; i++) {
+      //       if (KeyReply.dataValues.bots[i].message !== "") {
+      //         msg.reply(KeyReply.dataValues.bots[i].message);
+      //       }
+      //     }
+      //   }
+      //   // End Message
+
+      //   // Urlfile
+      //   if (KeyReply.dataValues.urifiles.length > 0) {
+      //     for (let i = 0; i < KeyReply.dataValues.urifiles.length; i++) {
+      // const media = await MessageMedia.fromUrl(
+      //   KeyReply.dataValues.urifiles[i].name
+      // );
+      // chat.sendMessage(media);
+      //     }
+      //   }
+      //   // End Urlfiles
+      // } else {
+      //   console.log("no data");
+      // }
+      // // End Data Dinamis
 
       // Ganti nama dan kota
       if (userTyping.substring(0, 1) == "#") {
@@ -263,6 +298,18 @@ const createSession = async (id) => {
       // End
     }
     // End AutoReply
+
+    // if (msg.body == "!ping") {
+    //   await msg.reply(`${contact.pushname} Selamat pagi!`);
+    //   const media = await MessageMedia.fromUrl(
+    //     "https://juser.fz-juelich.de/record/891478/files/python-2021.pdf"
+    //   );
+    //   // await chat.sendMessage(media);
+    //   await msg.reply(media);
+    // } else if (msg.body.toLowerCase() == "tes") {
+    //   await msg.reply(contact.pushname);
+    //   // console.log(contact);
+    // }
   });
 
   app.use("/logout", (req, res) => {
@@ -273,6 +320,8 @@ const createSession = async (id) => {
 };
 
 const init = async (socket) => {
+  // const savedSession = await readSession();
+
   const session = await db.sessions.findAll();
 
   if (session.length > 0) {
@@ -307,6 +356,8 @@ app.post("/session/create", async (req, res) => {
   };
   const Session = db.sessions;
   const session = await Session.create(upl);
+  // saveSession(req.body.name, req.body.deskripsi, req.body.username);
+  // const data = await readSession();
   const data = await Session.findAll({});
   io.emit("init", data);
   createSession(session.id, session.name, session.description);
@@ -316,9 +367,11 @@ app.post("/session/create", async (req, res) => {
 
 // Hapus Akun
 app.delete("/session/:id", async (req, res) => {
+  // removeSession(req.params.id);
   const Session = db.sessions;
   await Session.destroy({ where: { id: req.params.id } });
   const data = await Session.findAll({});
+  // const data = await readSession();
   io.emit("init", data);
   res.send("delete");
 });
