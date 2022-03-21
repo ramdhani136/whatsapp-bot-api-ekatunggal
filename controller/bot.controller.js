@@ -1,5 +1,5 @@
+// const { io } = require("../app");
 const db = require("../models");
-// const { io } = require("../config/socket");
 
 const Bots = db.bots;
 const Keys = db.keys;
@@ -23,7 +23,8 @@ const create = async (req, res) => {
 };
 
 const getAllBots = async (req, res) => {
-  // io.emit("tes", "halo");
+  // console.log("HHHHHHHHHHHHHHHHHHHHHHH");
+  // console.log(io);
   let bots = await Bots.findAll({
     include: [
       {

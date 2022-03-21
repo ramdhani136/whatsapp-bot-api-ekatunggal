@@ -17,7 +17,6 @@ const db = require("./models");
 
 const app = express();
 const server = http.createServer(app);
-// const io = require("./config/socket");
 
 io = socketIO(server, {
   cors: {
