@@ -6,6 +6,38 @@ const Keys = db.keys;
 const Menu = db.menu;
 const UriFiles = db.urifiles;
 
+const newBots = async () => {
+  return await Bots.findAll({
+    include: [
+      {
+        model: Keys,
+        as: "key",
+      },
+      {
+        model: Keys,
+        as: "prevKey",
+      },
+      {
+        model: Menu,
+        as: "menuAktif",
+      },
+      {
+        model: Menu,
+        as: "prevMenu",
+      },
+      {
+        model: Menu,
+        as: "afterMenu",
+      },
+      {
+        model: UriFiles,
+        as: "urifiles",
+      },
+    ],
+    order: [["id_menuAktif", "ASC"]],
+  });
+};
+
 const create = async (req, res) => {
   let data = {
     id_key: req.body.id_key,
@@ -18,13 +50,12 @@ const create = async (req, res) => {
   };
 
   const bots = await Bots.create(data);
+  req.socket.emit("bots", await newBots());
 
   res.status(200).send(bots);
 };
 
 const getAllBots = async (req, res) => {
-  // console.log("HHHHHHHHHHHHHHHHHHHHHHH");
-  // console.log(io);
   let bots = await Bots.findAll({
     include: [
       {
@@ -66,12 +97,14 @@ const getOneBot = async (req, res) => {
 const updateBot = async (req, res) => {
   let id = req.params.id;
   const bot = await Bots.update(req.body, { where: { id: id } });
+  req.socket.emit("bots", await newBots());
   res.status(200).send(bot);
 };
 
 const deleteBot = async (req, res) => {
   let id = req.params.id;
   await Bots.destroy({ where: { id: id } });
+  req.socket.emit("bots", await newBots());
   res.status(200).send("keys is deleted");
 };
 

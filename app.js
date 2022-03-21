@@ -17,8 +17,8 @@ const db = require("./models");
 
 const app = express();
 const server = http.createServer(app);
-
-io = socketIO(server, {
+const { Server } = require("socket.io");
+const io = new Server(server, {
   cors: {
     origin: ["http://localhost:3000", "http://localhost:5000"],
     methods: ["GET", "POST"],
@@ -27,6 +27,15 @@ io = socketIO(server, {
     credentials: true,
   },
 });
+// io = socketIO(server, {
+//   cors: {
+//     origin: ["http://localhost:3000", "http://localhost:5000"],
+//     methods: ["GET", "POST"],
+//     transports: ["websocket", "polling", "flashsocket"],
+//     allowedHeaders: ["react-client"],
+//     credentials: true,
+//   },
+// });
 
 const corsOptions = {
   origin: ["http://localhost:3000", "http://localhost:5000"],
@@ -144,6 +153,25 @@ const createSession = async (id) => {
     const UriFile = db.urifiles;
     const Keys = db.keys;
     const Menu = db.menu;
+    const newCustomer = async () => {
+      return await db.customers.findAll({
+        order: [["id", "DESC"]],
+        include: [
+          {
+            model: Menu,
+            as: "menuAktif",
+          },
+          {
+            model: Menu,
+            as: "prevMenu",
+          },
+          {
+            model: Keys,
+            as: "prevKey",
+          },
+        ],
+      });
+    };
     const IsKey = await db.keys.findOne({ where: { name: msg.body } });
     const IsCustomer = await Customer.findOne({
       where: { phone: chat.id.user },
@@ -165,7 +193,9 @@ const createSession = async (id) => {
         id_prevMenu: 1,
         id_prevKey: 14,
       };
-      await Customer.create(data);
+      await Customer.create(data).then(async () => {
+        io.emit("customers", await newCustomer());
+      });
       // msg.reply("anda user baru");
     } else {
       // //Data Dinamis
@@ -219,6 +249,8 @@ const createSession = async (id) => {
             };
             await Customer.update(updateCustomer, {
               where: { phone: chat.id.user },
+            }).then(async () => {
+              io.emit("customers", await newCustomer());
             });
           }
         }
@@ -230,7 +262,12 @@ const createSession = async (id) => {
           name: userTyping.substring(1, index_),
           kota: userTyping.substring(index_ + 1, 255),
         };
-        await Customer.update(updateValue, { where: { phone: chat.id.user } });
+        await Customer.update(updateValue, {
+          where: { phone: chat.id.user },
+        }).then(async () => {
+          io.emit("customers", await newCustomer());
+        });
+
         msg.reply(
           "Sekarang kami akan memanggil kamu : " +
             userTyping.substring(1, index_)
@@ -244,7 +281,12 @@ const createSession = async (id) => {
         await Customer.update(
           { item: userTyping.substring(1, 255) },
           { where: { phone: chat.id.user } }
-        );
+        ).then(async () => {
+          io.emit("customers", await newCustomer());
+        });
+        // .then(() => {
+        //   io.emit("customers", newCustomer);
+        // });
         msg.reply("Kamu memilih item  : " + userTyping.substring(1, 255));
       }
       // End
@@ -272,11 +314,62 @@ const createSession = async (id) => {
 };
 
 const init = async (socket) => {
+  const Keys = db.keys;
+  const Menu = db.menu;
+  const UriFiles = db.urifiles;
+  const Customer = await db.customers.findAll({
+    order: [["id", "DESC"]],
+    include: [
+      {
+        model: Menu,
+        as: "menuAktif",
+      },
+      {
+        model: Menu,
+        as: "prevMenu",
+      },
+      {
+        model: Keys,
+        as: "prevKey",
+      },
+    ],
+  });
+  const bots = await db.bots.findAll({
+    include: [
+      {
+        model: Keys,
+        as: "key",
+      },
+      {
+        model: Keys,
+        as: "prevKey",
+      },
+      {
+        model: Menu,
+        as: "menuAktif",
+      },
+      {
+        model: Menu,
+        as: "prevMenu",
+      },
+      {
+        model: Menu,
+        as: "afterMenu",
+      },
+      {
+        model: UriFiles,
+        as: "urifiles",
+      },
+    ],
+    order: [["id_menuAktif", "ASC"]],
+  });
   const session = await db.sessions.findAll();
 
   if (session.length > 0) {
     if (socket) {
       socket.emit("init", session);
+      socket.emit("bots", bots);
+      socket.emit("customers", Customer);
     } else {
       // Menambahkan data akun
       session.forEach((sess) => {
@@ -367,6 +460,11 @@ const uriFileRouter = require("./routes/uriFile");
 const botRouter = require("./routes/bot");
 const customerRouter = require("./routes/customer");
 const menuRouter = require("./routes/menu");
+
+app.use(function (req, res, next) {
+  req.socket = io;
+  next();
+});
 
 app.use("/session", sessionRouter);
 app.use("/key", keyRouter);
