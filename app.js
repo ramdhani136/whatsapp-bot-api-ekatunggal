@@ -181,7 +181,7 @@ const createSession = async (id) => {
     const isResult = allCust.filter((cust) => cust.phone === chat.id.user);
     const index_ = msg.body.indexOf("_");
 
-    if (isResult.length < 1) {
+    if (isResult.length < 1 && !chat.isGroup) {
       const nama =
         contact.verifiedName !== undefined
           ? contact.verifiedName
@@ -233,7 +233,12 @@ const createSession = async (id) => {
         });
         if (Bots.length > 0) {
           for (var i = 0; i < Bots.length; i++) {
-            msg.reply(Bots[i].dataValues.message);
+            const newMsg = Bots[i].dataValues.message.replace(
+              "{name}",
+              isResult[0].dataValues.name
+            );
+            msg.reply(newMsg);
+
             if (Bots[i].dataValues.urifiles.length > 0) {
               for (let j = 0; j < Bots[i].dataValues.urifiles.length; j++) {
                 const media = await MessageMedia.fromUrl(
@@ -291,17 +296,20 @@ const createSession = async (id) => {
       }
       // End
 
-      // update key aktif
-      // if (userTyping.substring(0, 1) == "/") {
-      //   await Customer.update(
-      //     { key: userTyping.substring(1, 255) },
-      //     { where: { phone: chat.id.user } }
-      //   );
-      //   msg.reply(
-      //     "Kamu sedang berada di menu : " + userTyping.substring(1, 255)
-      //   );
-      // }
-      // End
+      //Kirim kontak
+      if ((msg.body = "$kontak" && !chat.isGroup)) {
+        var isContact = [...contact];
+        // isContact.number = "085700000000";
+        // isContact.verifiedName = "cobain doang";
+        // isContact.isBusiness = false;
+        // isContact.id.user = "085700000000";
+        // isContact.id._serialized = "085700000000@c.us";
+        console.log(isContact);
+        console.log(contact);
+        msg.reply(contact);
+        // msg.reply(isContact);
+      }
+      // End kirim kontak
     }
     // End AutoReply
   });
