@@ -47,6 +47,7 @@ const create = async (req, res) => {
     id_afterMenu: req.body.id_afterMenu,
     message: req.body.message,
     status: req.body.status,
+    forward: req.body.forward,
   };
 
   const bots = await Bots.create(data);

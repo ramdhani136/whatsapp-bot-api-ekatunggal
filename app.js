@@ -27,15 +27,6 @@ const io = new Server(server, {
     credentials: true,
   },
 });
-// io = socketIO(server, {
-//   cors: {
-//     origin: ["http://localhost:3000", "http://localhost:5000"],
-//     methods: ["GET", "POST"],
-//     transports: ["websocket", "polling", "flashsocket"],
-//     allowedHeaders: ["react-client"],
-//     credentials: true,
-//   },
-// });
 
 const corsOptions = {
   origin: ["http://localhost:3000", "http://localhost:5000"],
@@ -55,8 +46,8 @@ app.get("/", (req, res) => {
 });
 
 const createSession = async (id) => {
-  const Session = db.sessions;
-  const dataSession = await Session.findOne({ where: { id: id } });
+  // const Session = db.sessions;
+  // const dataSession = await Session.findOne({ where: { id: id } });
 
   // const client = new Client({
   //   puppeteer: {
@@ -75,7 +66,7 @@ const createSession = async (id) => {
   //   authStrategy: new LocalAuth({ clientId: id }),
   // });
 
-  const sessionSave = JSON.parse(dataSession.dataValues.session);
+  // const sessionSave = JSON.parse(dataSession.dataValues.session);
   const client = new Client({
     restartOnAuthFail: true,
     puppeteer: {
@@ -91,9 +82,10 @@ const createSession = async (id) => {
         "--disable-gpu",
       ],
     },
-    authStrategy: new LegacySessionAuth({
-      session: sessionSave, // saved session object
-    }),
+    // authStrategy: new LegacySessionAuth({
+    //   session: sessionSave, // saved session object
+    // }),
+    authStrategy: new LocalAuth({ clientId: id }),
   });
 
   client.initialize();
@@ -117,18 +109,18 @@ const createSession = async (id) => {
   client.on("authenticated", async (session) => {
     io.emit("authenticated", { id: id });
     io.emit("message", { id: id, text: "Whatsapp is authenticated!" });
-    const data = { ready: 1, session: session };
-    const Session = db.sessions;
-    await Session.update(data, { where: { id: id } });
+    // const data = { ready: 1, session: session };
+    // const Session = db.sessions;
+    // await Session.update(data, { where: { id: id } });
   });
 
   client.on("auth_failure", async (session) => {
     io.emit("message", { id: id, text: "Auth eror ,restarting..." });
 
-    const data = { ready: 0, session: null };
-    const Session = db.sessions;
-    // updateSession(false, id, null);
-    await Session.update(data, { where: { id: id } });
+    // const data = { ready: 0, session: null };
+    // const Session = db.sessions;
+    // // updateSession(false, id, null);
+    // await Session.update(data, { where: { id: id } });
 
     client.destroy();
     client.initialize();
@@ -136,9 +128,9 @@ const createSession = async (id) => {
 
   client.on("disconnected", async (reason) => {
     io.emit("message", { id: id, text: "Whatsapp is disconnected!" });
-    const data = { ready: 0, session: null };
-    const Session = db.sessions;
-    await Session.update(data, { where: { id: id } });
+    // const data = { ready: 0, session: null };
+    // const Session = db.sessions;
+    // await Session.update(data, { where: { id: id } });
 
     client.destroy();
     client.initialize();
@@ -315,8 +307,7 @@ const createSession = async (id) => {
   });
 
   app.use("/logout", (req, res) => {
-    client.destroy();
-    client.initialize();
+    client.logout();
     res.send("sukses");
   });
 };
