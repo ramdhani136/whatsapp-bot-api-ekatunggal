@@ -1,2 +1,3 @@
-2022/04/20-16:00:20.095 44f0 Creating DB E:\ngoding\web\whatsappboot\.wwebjs_auth\session-1\Default\Local Storage\leveldb since it was missing.
-2022/04/20-16:00:20.226 44f0 Reusing MANIFEST E:\ngoding\web\whatsappboot\.wwebjs_auth\session-1\Default\Local Storage\leveldb/MANIFEST-000001
+2022/04/21-10:58:53.020 6404 Reusing MANIFEST E:\ngoding\web\whatsappboot\.wwebjs_auth\session-1\Default\Local Storage\leveldb/MANIFEST-000001
+2022/04/21-10:58:53.020 6404 Recovering log #3
+2022/04/21-10:58:53.022 6404 Reusing old log E:\ngoding\web\whatsappboot\.wwebjs_auth\session-1\Default\Local Storage\leveldb/000003.log 

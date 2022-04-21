@@ -229,7 +229,63 @@ const createSession = async (id) => {
               "{name}",
               isResult[0].dataValues.name
             );
-            msg.reply(newMsg);
+            if (newMsg !== "") {
+              msg.reply(newMsg);
+            }
+            if (Bots[i].dataValues.forward) {
+              const forwardBot = await db.bots.findAll({
+                include: [
+                  {
+                    model: Keys,
+                    as: "key",
+                  },
+                  {
+                    model: Keys,
+                    as: "prevKey",
+                  },
+                  {
+                    model: Menu,
+                    as: "menuAktif",
+                  },
+                  {
+                    model: Menu,
+                    as: "prevMenu",
+                  },
+                  {
+                    model: Menu,
+                    as: "afterMenu",
+                  },
+                  {
+                    model: UriFile,
+                    as: "urifiles",
+                  },
+                ],
+                where: {
+                  id_menuAktif: Bots[i].dataValues.id_prevMenu,
+                  id_key: Bots[i].dataValues.id_prevKey,
+                },
+              });
+              console.log(forwardBot);
+              const newMsgForward = forwardBot[0].dataValues.message.replace(
+                "{name}",
+                isResult[0].dataValues.name
+              );
+              if (newMsgForward !== "") {
+                msg.reply(newMsgForward);
+              }
+              if (forwardBot[0].dataValues.urifiles.length > 0) {
+                for (
+                  let h = 0;
+                  h < forwardBot[0].dataValues.urifiles.length;
+                  h++
+                ) {
+                  const media = await MessageMedia.fromUrl(
+                    forwardBot[0].dataValues.urifiles[h].name
+                  );
+                  chat.sendMessage(media);
+                }
+              }
+            }
 
             if (Bots[i].dataValues.urifiles.length > 0) {
               for (let j = 0; j < Bots[i].dataValues.urifiles.length; j++) {
@@ -459,6 +515,7 @@ const uriFileRouter = require("./routes/uriFile");
 const botRouter = require("./routes/bot");
 const customerRouter = require("./routes/customer");
 const menuRouter = require("./routes/menu");
+const { bots } = require("./models");
 
 app.use(function (req, res, next) {
   req.socket = io;

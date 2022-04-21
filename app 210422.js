@@ -17,8 +17,8 @@ const db = require("./models");
 
 const app = express();
 const server = http.createServer(app);
-
-io = socketIO(server, {
+const { Server } = require("socket.io");
+const io = new Server(server, {
   cors: {
     origin: ["http://localhost:3000", "http://localhost:5000"],
     methods: ["GET", "POST"],
@@ -46,8 +46,8 @@ app.get("/", (req, res) => {
 });
 
 const createSession = async (id) => {
-  const Session = db.sessions;
-  const dataSession = await Session.findOne({ where: { id: id } });
+  // const Session = db.sessions;
+  // const dataSession = await Session.findOne({ where: { id: id } });
 
   // const client = new Client({
   //   puppeteer: {
@@ -66,7 +66,7 @@ const createSession = async (id) => {
   //   authStrategy: new LocalAuth({ clientId: id }),
   // });
 
-  const sessionSave = JSON.parse(dataSession.dataValues.session);
+  // const sessionSave = JSON.parse(dataSession.dataValues.session);
   const client = new Client({
     restartOnAuthFail: true,
     puppeteer: {
@@ -82,9 +82,10 @@ const createSession = async (id) => {
         "--disable-gpu",
       ],
     },
-    authStrategy: new LegacySessionAuth({
-      session: sessionSave, // saved session object
-    }),
+    // authStrategy: new LegacySessionAuth({
+    //   session: sessionSave, // saved session object
+    // }),
+    authStrategy: new LocalAuth({ clientId: id }),
   });
 
   client.initialize();
@@ -108,18 +109,18 @@ const createSession = async (id) => {
   client.on("authenticated", async (session) => {
     io.emit("authenticated", { id: id });
     io.emit("message", { id: id, text: "Whatsapp is authenticated!" });
-    const data = { ready: 1, session: session };
-    const Session = db.sessions;
-    await Session.update(data, { where: { id: id } });
+    // const data = { ready: 1, session: session };
+    // const Session = db.sessions;
+    // await Session.update(data, { where: { id: id } });
   });
 
   client.on("auth_failure", async (session) => {
     io.emit("message", { id: id, text: "Auth eror ,restarting..." });
 
-    const data = { ready: 0, session: null };
-    const Session = db.sessions;
-    // updateSession(false, id, null);
-    await Session.update(data, { where: { id: id } });
+    // const data = { ready: 0, session: null };
+    // const Session = db.sessions;
+    // // updateSession(false, id, null);
+    // await Session.update(data, { where: { id: id } });
 
     client.destroy();
     client.initialize();
@@ -127,9 +128,9 @@ const createSession = async (id) => {
 
   client.on("disconnected", async (reason) => {
     io.emit("message", { id: id, text: "Whatsapp is disconnected!" });
-    const data = { ready: 0, session: null };
-    const Session = db.sessions;
-    await Session.update(data, { where: { id: id } });
+    // const data = { ready: 0, session: null };
+    // const Session = db.sessions;
+    // await Session.update(data, { where: { id: id } });
 
     client.destroy();
     client.initialize();
@@ -144,6 +145,25 @@ const createSession = async (id) => {
     const UriFile = db.urifiles;
     const Keys = db.keys;
     const Menu = db.menu;
+    const newCustomer = async () => {
+      return await db.customers.findAll({
+        order: [["id", "DESC"]],
+        include: [
+          {
+            model: Menu,
+            as: "menuAktif",
+          },
+          {
+            model: Menu,
+            as: "prevMenu",
+          },
+          {
+            model: Keys,
+            as: "prevKey",
+          },
+        ],
+      });
+    };
     const IsKey = await db.keys.findOne({ where: { name: msg.body } });
     const IsCustomer = await Customer.findOne({
       where: { phone: chat.id.user },
@@ -153,7 +173,7 @@ const createSession = async (id) => {
     const isResult = allCust.filter((cust) => cust.phone === chat.id.user);
     const index_ = msg.body.indexOf("_");
 
-    if (isResult.length < 1) {
+    if (isResult.length < 1 && !chat.isGroup) {
       const nama =
         contact.verifiedName !== undefined
           ? contact.verifiedName
@@ -165,7 +185,9 @@ const createSession = async (id) => {
         id_prevMenu: 1,
         id_prevKey: 14,
       };
-      await Customer.create(data);
+      await Customer.create(data).then(async () => {
+        io.emit("customers", await newCustomer());
+      });
       // msg.reply("anda user baru");
     } else {
       // //Data Dinamis
@@ -203,7 +225,23 @@ const createSession = async (id) => {
         });
         if (Bots.length > 0) {
           for (var i = 0; i < Bots.length; i++) {
-            msg.reply(Bots[i].dataValues.message);
+            const newMsg = Bots[i].dataValues.message.replace(
+              "{name}",
+              isResult[0].dataValues.name
+            );
+            if (newMsg !== "") {
+              msg.reply(newMsg);
+            }
+            if (Bots[i].dataValues.forward) {
+              const forwardBot = await db.bots.findAll({
+                where: {
+                  id_prevMenu: Bots[i].dataValues.id_prevMenu,
+                  id_prevKey: Bots[i].dataValues.id_prevKey,
+                },
+              });
+              console.log(forwardBot);
+            }
+
             if (Bots[i].dataValues.urifiles.length > 0) {
               for (let j = 0; j < Bots[i].dataValues.urifiles.length; j++) {
                 const media = await MessageMedia.fromUrl(
@@ -219,6 +257,8 @@ const createSession = async (id) => {
             };
             await Customer.update(updateCustomer, {
               where: { phone: chat.id.user },
+            }).then(async () => {
+              io.emit("customers", await newCustomer());
             });
           }
         }
@@ -230,7 +270,12 @@ const createSession = async (id) => {
           name: userTyping.substring(1, index_),
           kota: userTyping.substring(index_ + 1, 255),
         };
-        await Customer.update(updateValue, { where: { phone: chat.id.user } });
+        await Customer.update(updateValue, {
+          where: { phone: chat.id.user },
+        }).then(async () => {
+          io.emit("customers", await newCustomer());
+        });
+
         msg.reply(
           "Sekarang kami akan memanggil kamu : " +
             userTyping.substring(1, index_)
@@ -244,39 +289,97 @@ const createSession = async (id) => {
         await Customer.update(
           { item: userTyping.substring(1, 255) },
           { where: { phone: chat.id.user } }
-        );
+        ).then(async () => {
+          io.emit("customers", await newCustomer());
+        });
+        // .then(() => {
+        //   io.emit("customers", newCustomer);
+        // });
         msg.reply("Kamu memilih item  : " + userTyping.substring(1, 255));
       }
       // End
 
-      // update key aktif
-      // if (userTyping.substring(0, 1) == "/") {
-      //   await Customer.update(
-      //     { key: userTyping.substring(1, 255) },
-      //     { where: { phone: chat.id.user } }
-      //   );
-      //   msg.reply(
-      //     "Kamu sedang berada di menu : " + userTyping.substring(1, 255)
-      //   );
-      // }
-      // End
+      //Kirim kontak
+      if ((msg.body = "$kontak" && !chat.isGroup)) {
+        var isContact = [...contact];
+        // isContact.number = "085700000000";
+        // isContact.verifiedName = "cobain doang";
+        // isContact.isBusiness = false;
+        // isContact.id.user = "085700000000";
+        // isContact.id._serialized = "085700000000@c.us";
+        console.log(isContact);
+        console.log(contact);
+        msg.reply(contact);
+        // msg.reply(isContact);
+      }
+      // End kirim kontak
     }
     // End AutoReply
   });
 
   app.use("/logout", (req, res) => {
-    client.destroy();
-    client.initialize();
+    client.logout();
     res.send("sukses");
   });
 };
 
 const init = async (socket) => {
+  const Keys = db.keys;
+  const Menu = db.menu;
+  const UriFiles = db.urifiles;
+  const Customer = await db.customers.findAll({
+    order: [["id", "DESC"]],
+    include: [
+      {
+        model: Menu,
+        as: "menuAktif",
+      },
+      {
+        model: Menu,
+        as: "prevMenu",
+      },
+      {
+        model: Keys,
+        as: "prevKey",
+      },
+    ],
+  });
+  const bots = await db.bots.findAll({
+    include: [
+      {
+        model: Keys,
+        as: "key",
+      },
+      {
+        model: Keys,
+        as: "prevKey",
+      },
+      {
+        model: Menu,
+        as: "menuAktif",
+      },
+      {
+        model: Menu,
+        as: "prevMenu",
+      },
+      {
+        model: Menu,
+        as: "afterMenu",
+      },
+      {
+        model: UriFiles,
+        as: "urifiles",
+      },
+    ],
+    order: [["id_menuAktif", "ASC"]],
+  });
   const session = await db.sessions.findAll();
 
   if (session.length > 0) {
     if (socket) {
       socket.emit("init", session);
+      socket.emit("bots", bots);
+      socket.emit("customers", Customer);
     } else {
       // Menambahkan data akun
       session.forEach((sess) => {
@@ -367,6 +470,12 @@ const uriFileRouter = require("./routes/uriFile");
 const botRouter = require("./routes/bot");
 const customerRouter = require("./routes/customer");
 const menuRouter = require("./routes/menu");
+const { bots } = require("./models");
+
+app.use(function (req, res, next) {
+  req.socket = io;
+  next();
+});
 
 app.use("/session", sessionRouter);
 app.use("/key", keyRouter);
