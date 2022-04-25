@@ -27,6 +27,8 @@ db.urifiles = require("./uriFile")(sequelize, DataTypes);
 db.bots = require("./bot")(sequelize, DataTypes);
 db.customers = require("./customer")(sequelize, DataTypes);
 db.menu = require("./menuModel")(sequelize, DataTypes);
+db.sales = require("./salesModel")(sequelize, DataTypes);
+db.salesGroup = require("./salesGroupModel")(sequelize, DataTypes);
 
 db.sequelize.sync({ force: false }).then(() => {
   console.log("resync!");
@@ -88,5 +90,17 @@ db.customers.belongsTo(db.keys, {
   as: "prevKey",
 });
 // End
+
+// Sales
+db.sales.belongsTo(db.salesGroup, {
+  foreignKey: "id_group",
+  as: "group",
+});
+
+// Sales Group
+db.salesGroup.hasMany(db.sales, {
+  foreignKey: "id_group",
+  as: "sales",
+});
 
 module.exports = db;

@@ -173,6 +173,8 @@ const createSession = async (id) => {
     const isResult = allCust.filter((cust) => cust.phone === chat.id.user);
     const index_ = msg.body.indexOf("_");
 
+    console.log(chat);
+
     if (isResult.length < 1 && !chat.isGroup) {
       const nama =
         contact.verifiedName !== undefined
@@ -265,7 +267,6 @@ const createSession = async (id) => {
                   id_key: Bots[i].dataValues.id_prevKey,
                 },
               });
-              console.log(forwardBot);
               const newMsgForward = forwardBot[0].dataValues.message.replace(
                 "{name}",
                 isResult[0].dataValues.name
@@ -301,6 +302,128 @@ const createSession = async (id) => {
               id_prevKey: Bots[i].id_prevKey,
             };
             await Customer.update(updateCustomer, {
+              where: { phone: chat.id.user },
+            }).then(async () => {
+              io.emit("customers", await newCustomer());
+            });
+          }
+        }
+
+        // All Menu
+        const allMenuBots = await db.bots.findAll({
+          include: [
+            {
+              model: Keys,
+              as: "key",
+            },
+            {
+              model: Keys,
+              as: "prevKey",
+            },
+            {
+              model: Menu,
+              as: "menuAktif",
+            },
+            {
+              model: Menu,
+              as: "prevMenu",
+            },
+            {
+              model: Menu,
+              as: "afterMenu",
+            },
+            {
+              model: UriFile,
+              as: "urifiles",
+            },
+          ],
+          where: { id_key: IsKey.dataValues.id, id_menuAktif: 33 },
+          order: [["id", "ASC"]],
+        });
+
+        if (allMenuBots.length > 0) {
+          for (var i = 0; i < allMenuBots.length; i++) {
+            const newAllMsg = allMenuBots[i].dataValues.message.replace(
+              "{name}",
+              isResult[0].dataValues.name
+            );
+            if (newAllMsg !== "") {
+              msg.reply(newAllMsg);
+            }
+            if (allMenuBots[i].dataValues.forward) {
+              const forwardAllBot = await db.bots.findAll({
+                include: [
+                  {
+                    model: Keys,
+                    as: "key",
+                  },
+                  {
+                    model: Keys,
+                    as: "prevKey",
+                  },
+                  {
+                    model: Menu,
+                    as: "menuAktif",
+                  },
+                  {
+                    model: Menu,
+                    as: "prevMenu",
+                  },
+                  {
+                    model: Menu,
+                    as: "afterMenu",
+                  },
+                  {
+                    model: UriFile,
+                    as: "urifiles",
+                  },
+                ],
+                where: {
+                  id_menuAktif: allMenuBots[i].dataValues.id_prevMenu,
+                  id_key: allMenuBots[i].dataValues.id_prevKey,
+                },
+              });
+              const newMsgAllForward =
+                forwardAllBot[0].dataValues.message.replace(
+                  "{name}",
+                  isResult[0].dataValues.name
+                );
+              if (newMsgAllForward !== "") {
+                msg.reply(newMsgAllForward);
+              }
+
+              if (forwardAllBot[0].dataValues.urifiles.length > 0) {
+                for (
+                  let b = 0;
+                  b < forwardAllBot[0].dataValues.urifiles.length;
+                  b++
+                ) {
+                  const mediaAll = await MessageMedia.fromUrl(
+                    forwardAllBot[0].dataValues.urifiles[b].name
+                  );
+                  chat.sendMessage(mediaAll);
+                }
+              }
+            }
+
+            if (allMenuBots[i].dataValues.urifiles.length > 0) {
+              for (
+                let j = 0;
+                j < allMenuBots[i].dataValues.urifiles.length;
+                j++
+              ) {
+                const media2all = await MessageMedia.fromUrl(
+                  allMenuBots[i].dataValues.urifiles[j].name
+                );
+                chat.sendMessage(media2all);
+              }
+            }
+            const updateCustomerAll = {
+              id_menuAktif: allMenuBots[i].id_afterMenu,
+              id_prevMenu: allMenuBots[i].id_prevMenu,
+              id_prevKey: allMenuBots[i].id_prevKey,
+            };
+            await Customer.update(updateCustomerAll, {
               where: { phone: chat.id.user },
             }).then(async () => {
               io.emit("customers", await newCustomer());
@@ -515,6 +638,8 @@ const uriFileRouter = require("./routes/uriFile");
 const botRouter = require("./routes/bot");
 const customerRouter = require("./routes/customer");
 const menuRouter = require("./routes/menu");
+const salesRouter = require("./routes/sales");
+const salesGroupRouter = require("./routes/salesGroup");
 const { bots } = require("./models");
 
 app.use(function (req, res, next) {
@@ -528,6 +653,9 @@ app.use("/urifiles", uriFileRouter);
 app.use("/bots", botRouter);
 app.use("/customer", customerRouter);
 app.use("/menu", menuRouter);
+app.use("/sales", salesRouter);
+app.use("/salesgroup", salesGroupRouter);
+
 // End
 
 server.listen(port, () => {
