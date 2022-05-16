@@ -173,9 +173,11 @@ const createSession = async (id) => {
     const isResult = allCust.filter((cust) => cust.phone === chat.id.user);
     const index_ = msg.body.indexOf("_");
 
-    console.log(chat);
-
-    if (isResult.length < 1 && !chat.isGroup) {
+    if (
+      isResult.length < 1 &&
+      !chat.isGroup &&
+      chat.id.server !== "broadcast"
+    ) {
       const nama =
         contact.verifiedName !== undefined
           ? contact.verifiedName
@@ -430,6 +432,34 @@ const createSession = async (id) => {
             });
           }
         }
+
+        // FORWARD KONTAK
+        const salesGroup = await db.salesGroup.findOne({
+          where: { id: 7 },
+          include: [
+            {
+              model: db.sales,
+              as: "sales",
+            },
+          ],
+        });
+        if (salesGroup !== null) {
+          if (salesGroup.dataValues.sales.length > 0) {
+            for (let k = 0; k < salesGroup.dataValues.sales.length; k++) {
+              // Kirim pesan & kontak customer ke sales
+              const number = salesGroup.dataValues.sales[k].dataValues.phone;
+              const chatId = "62" + number.substring(1) + "@c.us";
+              let contactin = await client.getContactById(chatId);
+              msg.reply(contactin);
+              // let statusContact = await client.isRegisteredUser(chatId);
+              // Kirim pesan dan komtak sales ke Customer
+              // Kirim kontak customer ke sales
+              client.sendMessage(phoneNumberFormatter(number), contact);
+              //End Kirim kontak customer ke sales
+            }
+          }
+        }
+        // END FORWARD KONTAK
       }
 
       // Ganti nama dan kota
@@ -468,19 +498,19 @@ const createSession = async (id) => {
       // End
 
       //Kirim kontak
-      if ((msg.body = "$kontak" && !chat.isGroup)) {
-        var isContact = [...contact];
-        // isContact.number = "085700000000";
-        // isContact.verifiedName = "cobain doang";
-        // isContact.isBusiness = false;
-        // isContact.id.user = "085700000000";
-        // isContact.id._serialized = "085700000000@c.us";
-        console.log(isContact);
-        console.log(contact);
-        msg.reply(contact);
-        // msg.reply(isContact);
-      }
-      // End kirim kontak
+      // if ((msg.body = "$kontak" && !chat.isGroup)) {
+      //   var isContact = [...contact];
+      //   // isContact.number = "085700000000";
+      //   // isContact.verifiedName = "cobain doang";
+      //   // isContact.isBusiness = false;
+      //   // isContact.id.user = "085700000000";
+      //   // isContact.id._serialized = "085700000000@c.us";
+      //   console.log(isContact);
+      //   console.log(contact);
+      //   msg.reply(contact);
+      //   // msg.reply(isContact);
+      // }
+      // // End kirim kontak
     }
     // End AutoReply
   });
@@ -488,6 +518,16 @@ const createSession = async (id) => {
   app.use("/logout", (req, res) => {
     client.logout();
     res.send("sukses");
+  });
+
+  app.use("/hoho", async (req, res) => {
+    console.log("HHHHHHHHHHHHHHHHHHHHHHH");
+    const number = "+89637428874";
+    const chatId = number.substring(1) + "@c.us";
+    let contactin = await client.getContactById(chatId);
+    let statusContact = await client.isRegisteredUser(chatId);
+    console.log(contactin);
+    console.log(statusContact);
   });
 };
 
@@ -543,11 +583,33 @@ const init = async (socket) => {
   });
   const session = await db.sessions.findAll();
 
+  const Sales = await db.sales.findAll({
+    include: [
+      {
+        model: db.salesGroup,
+        as: "group",
+      },
+    ],
+    order: [["name", "ASC"]],
+  });
+
+  const SalesGroup = await db.salesGroup.findAll({
+    include: [
+      {
+        model: db.sales,
+        as: "sales",
+      },
+    ],
+    order: [["name", "ASC"]],
+  });
+
   if (session.length > 0) {
     if (socket) {
       socket.emit("init", session);
       socket.emit("bots", bots);
       socket.emit("customers", Customer);
+      socket.emit("sales", Sales);
+      socket.emit("salesgroup", SalesGroup);
     } else {
       // Menambahkan data akun
       session.forEach((sess) => {

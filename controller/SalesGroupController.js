@@ -18,7 +18,7 @@ const create = async (req, res) => {
   };
 
   const salesGroups = await SalesGroup.create(data);
-  req.socket.emit("salesGroup", await newSalesGroup());
+  req.socket.emit("salesgroup", await newSalesGroup());
 
   res.status(200).send(salesGroups);
 };
@@ -45,14 +45,14 @@ const getOneSalesGroup = async (req, res) => {
 const updateSalesGroup = async (req, res) => {
   let id = req.params.id;
   const salesGroup = await SalesGroup.update(req.body, { where: { id: id } });
-  req.socket.emit("salesGroup", await newSalesGroup());
+  req.socket.emit("salesgroup", await newSalesGroup());
   res.status(200).send(salesGroup);
 };
 
 const deleteSalesGroup = async (req, res) => {
   let id = req.params.id;
   await SalesGroup.destroy({ where: { id: id } });
-  req.socket.emit("salesGroup", await newSalesGroup());
+  req.socket.emit("salesgroup", await newSalesGroup());
   res.status(200).send("keys is deleted");
 };
 
