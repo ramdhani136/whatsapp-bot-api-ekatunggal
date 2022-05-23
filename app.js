@@ -454,7 +454,10 @@ const createSession = async (id) => {
               // let statusContact = await client.isRegisteredUser(chatId);
               // Kirim pesan dan komtak sales ke Customer
               // Kirim kontak customer ke sales
-              client.sendMessage(phoneNumberFormatter(number), contact);
+              client.sendMessage(
+                phoneNumberFormatter(number),
+                await msg.getContact()
+              );
               //End Kirim kontak customer ke sales
             }
           }
@@ -518,16 +521,6 @@ const createSession = async (id) => {
   app.use("/logout", (req, res) => {
     client.logout();
     res.send("sukses");
-  });
-
-  app.use("/hoho", async (req, res) => {
-    console.log("HHHHHHHHHHHHHHHHHHHHHHH");
-    const number = "+89637428874";
-    const chatId = number.substring(1) + "@c.us";
-    let contactin = await client.getContactById(chatId);
-    let statusContact = await client.isRegisteredUser(chatId);
-    console.log(contactin);
-    console.log(statusContact);
   });
 };
 
@@ -598,6 +591,7 @@ const init = async (socket) => {
       {
         model: db.sales,
         as: "sales",
+        include: [{ model: db.salesGroup, as: "group" }],
       },
     ],
     order: [["name", "ASC"]],
@@ -702,7 +696,7 @@ const customerRouter = require("./routes/customer");
 const menuRouter = require("./routes/menu");
 const salesRouter = require("./routes/sales");
 const salesGroupRouter = require("./routes/salesGroup");
-const { bots } = require("./models");
+const botContactRouter = require("./routes/botContact");
 
 app.use(function (req, res, next) {
   req.socket = io;
@@ -717,6 +711,7 @@ app.use("/customer", customerRouter);
 app.use("/menu", menuRouter);
 app.use("/sales", salesRouter);
 app.use("/salesgroup", salesGroupRouter);
+app.use("/botContact", botContactRouter);
 
 // End
 
