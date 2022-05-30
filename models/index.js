@@ -41,6 +41,11 @@ db.bots.hasMany(db.urifiles, {
   as: "urifiles",
 });
 
+db.bots.hasMany(db.botContact, {
+  foreignKey: "id_bot",
+  as: "botcontact",
+});
+
 db.bots.belongsTo(db.keys, {
   foreignKey: "id_key",
   as: "key",

@@ -29,6 +29,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    interest: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     forward: { type: DataTypes.BOOLEAN, defaultValue: 0 },
     status: { type: DataTypes.BOOLEAN, defaultValue: 1 },
   });

@@ -223,6 +223,16 @@ const createSession = async (id) => {
               model: UriFile,
               as: "urifiles",
             },
+            {
+              model: db.botContact,
+              as: "botcontact",
+              include: [
+                {
+                  model: db.sales,
+                  as: "sales",
+                },
+              ],
+            },
           ],
           where: { id_key: IsKey.dataValues.id, id_menuAktif: menuAktif },
           order: [["id", "ASC"]],
@@ -262,6 +272,16 @@ const createSession = async (id) => {
                   {
                     model: UriFile,
                     as: "urifiles",
+                  },
+                  {
+                    model: db.botContact,
+                    as: "botcontact",
+                    include: [
+                      {
+                        model: db.sales,
+                        as: "sales",
+                      },
+                    ],
                   },
                 ],
                 where: {
@@ -308,6 +328,48 @@ const createSession = async (id) => {
             }).then(async () => {
               io.emit("customers", await newCustomer());
             });
+            // FORWARD CONTACT
+            if (Bots[i].dataValues.botcontact.length > 0) {
+              for (let b = 0; b < Bots[i].dataValues.botcontact.length; b++) {
+                // Kirim pesan & kontak sales ke customer
+                const number =
+                  Bots[i].dataValues.botcontact[b].sales.dataValues.phone;
+                const chatId = "62" + number.substring(1) + "@c.us";
+                let contactin = await client.getContactById(chatId);
+                contactin.pushname =
+                  Bots[i].dataValues.botcontact[b].sales.dataValues.name;
+                contactin.name =
+                  Bots[i].dataValues.botcontact[b].sales.dataValues.name;
+                contactin.shortName =
+                  Bots[i].dataValues.botcontact[b].sales.dataValues.name;
+                contactin.verifiedName =
+                  Bots[i].dataValues.botcontact[b].sales.dataValues.name;
+                let statusContact = await client.isRegisteredUser(chatId);
+                if (statusContact) {
+                  msg.reply(contactin);
+                }
+                // End Kirim pesan & kontak sales ke customer
+
+                client.sendMessage(
+                  phoneNumberFormatter(number),
+                  await msg.getContact()
+                );
+                //End Kirim kontak customer ke sales
+              }
+            }
+
+            if (Bots[i].dataValues.interest !== "") {
+              console.log("HHHHHHHHHHHHHHHH");
+              console.log(Bots[i].dataValues.interest);
+              await Customer.update(
+                { item: Bots[i].dataValues.interest },
+                {
+                  where: { phone: chat.id.user },
+                }
+              ).then(async () => {
+                io.emit("customers", await newCustomer());
+              });
+            }
           }
         }
 
@@ -337,6 +399,16 @@ const createSession = async (id) => {
             {
               model: UriFile,
               as: "urifiles",
+            },
+            {
+              model: db.botContact,
+              as: "botcontact",
+              include: [
+                {
+                  model: db.sales,
+                  as: "sales",
+                },
+              ],
             },
           ],
           where: { id_key: IsKey.dataValues.id, id_menuAktif: 33 },
@@ -378,6 +450,16 @@ const createSession = async (id) => {
                   {
                     model: UriFile,
                     as: "urifiles",
+                  },
+                  {
+                    model: db.botContact,
+                    as: "botcontact",
+                    include: [
+                      {
+                        model: db.sales,
+                        as: "sales",
+                      },
+                    ],
                   },
                 ],
                 where: {
@@ -433,36 +515,36 @@ const createSession = async (id) => {
           }
         }
 
-        // FORWARD KONTAK
-        const salesGroup = await db.salesGroup.findOne({
-          where: { id: 7 },
-          include: [
-            {
-              model: db.sales,
-              as: "sales",
-            },
-          ],
-        });
-        if (salesGroup !== null) {
-          if (salesGroup.dataValues.sales.length > 0) {
-            for (let k = 0; k < salesGroup.dataValues.sales.length; k++) {
-              // Kirim pesan & kontak customer ke sales
-              const number = salesGroup.dataValues.sales[k].dataValues.phone;
-              const chatId = "62" + number.substring(1) + "@c.us";
-              let contactin = await client.getContactById(chatId);
-              msg.reply(contactin);
-              // let statusContact = await client.isRegisteredUser(chatId);
-              // Kirim pesan dan komtak sales ke Customer
-              // Kirim kontak customer ke sales
-              client.sendMessage(
-                phoneNumberFormatter(number),
-                await msg.getContact()
-              );
-              //End Kirim kontak customer ke sales
-            }
-          }
-        }
-        // END FORWARD KONTAK
+        // // FORWARD KONTAK
+        // const salesGroup = await db.salesGroup.findOne({
+        //   where: { id: 7 },
+        //   include: [
+        //     {
+        //       model: db.sales,
+        //       as: "sales",
+        //     },
+        //   ],
+        // });
+        // if (salesGroup !== null) {
+        //   if (salesGroup.dataValues.sales.length > 0) {
+        //     for (let k = 0; k < salesGroup.dataValues.sales.length; k++) {
+        //       // Kirim pesan & kontak customer ke sales
+        //       const number = salesGroup.dataValues.sales[k].dataValues.phone;
+        //       const chatId = "62" + number.substring(1) + "@c.us";
+        //       let contactin = await client.getContactById(chatId);
+        //       msg.reply(contactin);
+        //       // let statusContact = await client.isRegisteredUser(chatId);
+        //       // Kirim pesan dan komtak sales ke Customer
+        //       // Kirim kontak customer ke sales
+        //       client.sendMessage(
+        //         phoneNumberFormatter(number),
+        //         await msg.getContact()
+        //       );
+        //       //End Kirim kontak customer ke sales
+        //     }
+        //   }
+        // }
+        // // END FORWARD KONTAK
       }
 
       // Ganti nama dan kota
@@ -571,6 +653,17 @@ const init = async (socket) => {
         model: UriFiles,
         as: "urifiles",
       },
+
+      {
+        model: db.botContact,
+        as: "botcontact",
+        include: [
+          {
+            model: db.sales,
+            as: "sales",
+          },
+        ],
+      },
     ],
     order: [["id_menuAktif", "ASC"]],
   });
@@ -649,6 +742,49 @@ app.delete("/session/:id", async (req, res) => {
   res.send("delete");
 });
 // End
+
+app.get("/tes", async (req, res) => {
+  const forwardAllBot = await db.bots.findAll({
+    include: [
+      {
+        model: db.keys,
+        as: "key",
+      },
+      {
+        model: db.keys,
+        as: "prevKey",
+      },
+      {
+        model: db.menu,
+        as: "menuAktif",
+      },
+      {
+        model: db.menu,
+        as: "prevMenu",
+      },
+      {
+        model: db.menu,
+        as: "afterMenu",
+      },
+      {
+        model: db.urifiles,
+        as: "urifiles",
+      },
+      {
+        model: db.botContact,
+        as: "botcontact",
+        include: [
+          {
+            model: db.sales,
+            as: "sales",
+          },
+        ],
+      },
+    ],
+  });
+  console.log(forwardAllBot.length);
+  res.json(forwardAllBot);
+});
 
 // Mengirim pesan
 app.post("/sendMessage", async (req, res) => {

@@ -5,6 +5,7 @@ const Bots = db.bots;
 const Keys = db.keys;
 const Menu = db.menu;
 const UriFiles = db.urifiles;
+const BotContact = db.botContact;
 
 const newBots = async () => {
   return await Bots.findAll({
@@ -33,6 +34,16 @@ const newBots = async () => {
         model: UriFiles,
         as: "urifiles",
       },
+      {
+        model: BotContact,
+        as: "botcontact",
+        include: [
+          {
+            model: db.sales,
+            as: "sales",
+          },
+        ],
+      },
     ],
     order: [["id_menuAktif", "ASC"]],
   });
@@ -48,6 +59,7 @@ const create = async (req, res) => {
     message: req.body.message,
     status: req.body.status,
     forward: req.body.forward,
+    interest: req.body.interest,
   };
 
   const bots = await Bots.create(data);
@@ -82,6 +94,16 @@ const getAllBots = async (req, res) => {
       {
         model: UriFiles,
         as: "urifiles",
+      },
+      {
+        model: BotContact,
+        as: "botcontact",
+        include: [
+          {
+            model: db.sales,
+            as: "sales",
+          },
+        ],
       },
     ],
     order: [["id_menuAktif", "ASC"]],
