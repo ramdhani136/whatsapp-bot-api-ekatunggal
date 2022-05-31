@@ -192,366 +192,419 @@ const createSession = async (id) => {
       await Customer.create(data).then(async () => {
         io.emit("customers", await newCustomer());
       });
-      // msg.reply("anda user baru");
+      const kata =
+        "Halo saya Vika,\r\nVirtual Assistant Ekatunggal 💁🏻\r\n\r\nKami menyediakan berbagai macam kebutuhan material untuk :\r\n✅Springbed\r\n✅Sofa\r\n✅Furniture\r\n\r\nsilahkan pilih salah satu topik dibawah ini :\r\n\r\n1  Info Produk\r\n2  Info Alamat Kantor\r\n3  Berbicara dengan Customer Service\r\n99 Daftar Menu\r\n\r\npilih salah satu, contoh : *2* (untuk kaka yang ingin mengetahui alamat kantor Vika)\r\n";
+      msg.reply(kata);
     } else {
       // //Data Dinamis
-      if (IsKey !== null) {
-        const menuAktif = IsCustomer.dataValues.id_menuAktif;
-        const Bots = await db.bots.findAll({
-          include: [
-            {
-              model: Keys,
-              as: "key",
-            },
-            {
-              model: Keys,
-              as: "prevKey",
-            },
-            {
-              model: Menu,
-              as: "menuAktif",
-            },
-            {
-              model: Menu,
-              as: "prevMenu",
-            },
-            {
-              model: Menu,
-              as: "afterMenu",
-            },
-            {
-              model: UriFile,
-              as: "urifiles",
-            },
-            {
-              model: db.botContact,
-              as: "botcontact",
-              include: [
-                {
-                  model: db.sales,
-                  as: "sales",
-                },
-              ],
-            },
-          ],
-          where: { id_key: IsKey.dataValues.id, id_menuAktif: menuAktif },
-          order: [["id", "ASC"]],
-        });
-        if (Bots.length > 0) {
-          for (var i = 0; i < Bots.length; i++) {
-            const newMsg = Bots[i].dataValues.message.replace(
-              "{name}",
-              isResult[0].dataValues.name
-            );
-            if (newMsg !== "") {
-              msg.reply(newMsg);
-            }
-            if (Bots[i].dataValues.forward) {
-              const forwardBot = await db.bots.findAll({
+      if (chat.isGroup !== true) {
+        if (IsKey !== null) {
+          const menuAktif = IsCustomer.dataValues.id_menuAktif;
+          const Bots = await db.bots.findAll({
+            include: [
+              {
+                model: Keys,
+                as: "key",
+              },
+              {
+                model: Keys,
+                as: "prevKey",
+              },
+              {
+                model: Menu,
+                as: "menuAktif",
+              },
+              {
+                model: Menu,
+                as: "prevMenu",
+              },
+              {
+                model: Menu,
+                as: "afterMenu",
+              },
+              {
+                model: UriFile,
+                as: "urifiles",
+              },
+              {
+                model: db.botContact,
+                as: "botcontact",
                 include: [
                   {
-                    model: Keys,
-                    as: "key",
-                  },
-                  {
-                    model: Keys,
-                    as: "prevKey",
-                  },
-                  {
-                    model: Menu,
-                    as: "menuAktif",
-                  },
-                  {
-                    model: Menu,
-                    as: "prevMenu",
-                  },
-                  {
-                    model: Menu,
-                    as: "afterMenu",
-                  },
-                  {
-                    model: UriFile,
-                    as: "urifiles",
-                  },
-                  {
-                    model: db.botContact,
-                    as: "botcontact",
-                    include: [
-                      {
-                        model: db.sales,
-                        as: "sales",
-                      },
-                    ],
+                    model: db.sales,
+                    as: "sales",
                   },
                 ],
-                where: {
-                  id_menuAktif: Bots[i].dataValues.id_prevMenu,
-                  id_key: Bots[i].dataValues.id_prevKey,
-                },
-              });
-              const newMsgForward = forwardBot[0].dataValues.message.replace(
+              },
+            ],
+            where: { id_key: IsKey.dataValues.id, id_menuAktif: menuAktif },
+            order: [["id", "ASC"]],
+          });
+          if (Bots.length > 0) {
+            for (var i = 0; i < Bots.length; i++) {
+              const newMsg = Bots[i].dataValues.message.replace(
                 "{name}",
                 isResult[0].dataValues.name
               );
-              if (newMsgForward !== "") {
-                msg.reply(newMsgForward);
+              if (newMsg !== "") {
+                msg.reply(newMsg);
               }
-              if (forwardBot[0].dataValues.urifiles.length > 0) {
-                for (
-                  let h = 0;
-                  h < forwardBot[0].dataValues.urifiles.length;
-                  h++
-                ) {
+              if (Bots[i].dataValues.forward) {
+                const forwardBot = await db.bots.findAll({
+                  include: [
+                    {
+                      model: Keys,
+                      as: "key",
+                    },
+                    {
+                      model: Keys,
+                      as: "prevKey",
+                    },
+                    {
+                      model: Menu,
+                      as: "menuAktif",
+                    },
+                    {
+                      model: Menu,
+                      as: "prevMenu",
+                    },
+                    {
+                      model: Menu,
+                      as: "afterMenu",
+                    },
+                    {
+                      model: UriFile,
+                      as: "urifiles",
+                    },
+                    {
+                      model: db.botContact,
+                      as: "botcontact",
+                      include: [
+                        {
+                          model: db.sales,
+                          as: "sales",
+                        },
+                      ],
+                    },
+                  ],
+                  where: {
+                    id_menuAktif: Bots[i].dataValues.id_prevMenu,
+                    id_key: Bots[i].dataValues.id_prevKey,
+                  },
+                });
+                const newMsgForward = forwardBot[0].dataValues.message.replace(
+                  "{name}",
+                  isResult[0].dataValues.name
+                );
+                if (newMsgForward !== "") {
+                  msg.reply(newMsgForward);
+                }
+                if (forwardBot[0].dataValues.urifiles.length > 0) {
+                  for (
+                    let h = 0;
+                    h < forwardBot[0].dataValues.urifiles.length;
+                    h++
+                  ) {
+                    const media = await MessageMedia.fromUrl(
+                      forwardBot[0].dataValues.urifiles[h].name
+                    );
+                    chat.sendMessage(media);
+                  }
+                }
+              }
+
+              if (Bots[i].dataValues.urifiles.length > 0) {
+                for (let j = 0; j < Bots[i].dataValues.urifiles.length; j++) {
                   const media = await MessageMedia.fromUrl(
-                    forwardBot[0].dataValues.urifiles[h].name
+                    Bots[i].dataValues.urifiles[j].name
                   );
                   chat.sendMessage(media);
                 }
               }
-            }
+              const updateCustomer = {
+                id_menuAktif: Bots[i].id_afterMenu,
+                id_prevMenu: Bots[i].id_prevMenu,
+                id_prevKey: Bots[i].id_prevKey,
+              };
+              await Customer.update(updateCustomer, {
+                where: { phone: chat.id.user },
+              }).then(async () => {
+                io.emit("customers", await newCustomer());
+              });
+              // FORWARD CONTACT
+              if (Bots[i].dataValues.botcontact.length > 0) {
+                for (let b = 0; b < Bots[i].dataValues.botcontact.length; b++) {
+                  // Kirim pesan & kontak sales ke customer
+                  const number =
+                    Bots[i].dataValues.botcontact[b].sales.dataValues.phone;
+                  const chatId = "62" + number.substring(1) + "@c.us";
+                  let contactin = await client.getContactById(chatId);
+                  contactin.pushname =
+                    Bots[i].dataValues.botcontact[b].sales.dataValues.name;
+                  contactin.name =
+                    Bots[i].dataValues.botcontact[b].sales.dataValues.name;
+                  contactin.shortName =
+                    Bots[i].dataValues.botcontact[b].sales.dataValues.name;
+                  contactin.verifiedName =
+                    Bots[i].dataValues.botcontact[b].sales.dataValues.name;
+                  let statusContact = await client.isRegisteredUser(chatId);
+                  if (statusContact) {
+                    msg.reply(contactin);
+                  }
+                  // End Kirim pesan & kontak sales ke customer
 
-            if (Bots[i].dataValues.urifiles.length > 0) {
-              for (let j = 0; j < Bots[i].dataValues.urifiles.length; j++) {
-                const media = await MessageMedia.fromUrl(
-                  Bots[i].dataValues.urifiles[j].name
-                );
-                chat.sendMessage(media);
-              }
-            }
-            const updateCustomer = {
-              id_menuAktif: Bots[i].id_afterMenu,
-              id_prevMenu: Bots[i].id_prevMenu,
-              id_prevKey: Bots[i].id_prevKey,
-            };
-            await Customer.update(updateCustomer, {
-              where: { phone: chat.id.user },
-            }).then(async () => {
-              io.emit("customers", await newCustomer());
-            });
-            // FORWARD CONTACT
-            if (Bots[i].dataValues.botcontact.length > 0) {
-              for (let b = 0; b < Bots[i].dataValues.botcontact.length; b++) {
-                // Kirim pesan & kontak sales ke customer
-                const number =
-                  Bots[i].dataValues.botcontact[b].sales.dataValues.phone;
-                const chatId = "62" + number.substring(1) + "@c.us";
-                let contactin = await client.getContactById(chatId);
-                contactin.pushname =
-                  Bots[i].dataValues.botcontact[b].sales.dataValues.name;
-                contactin.name =
-                  Bots[i].dataValues.botcontact[b].sales.dataValues.name;
-                contactin.shortName =
-                  Bots[i].dataValues.botcontact[b].sales.dataValues.name;
-                contactin.verifiedName =
-                  Bots[i].dataValues.botcontact[b].sales.dataValues.name;
-                let statusContact = await client.isRegisteredUser(chatId);
-                if (statusContact) {
-                  msg.reply(contactin);
+                  client.sendMessage(
+                    phoneNumberFormatter(number),
+                    await msg.getContact()
+                  );
+                  //End Kirim kontak customer ke sales
                 }
-                // End Kirim pesan & kontak sales ke customer
+              }
 
-                client.sendMessage(
-                  phoneNumberFormatter(number),
-                  await msg.getContact()
-                );
-                //End Kirim kontak customer ke sales
+              if (Bots[i].dataValues.interest !== "") {
+                await Customer.update(
+                  { item: Bots[i].dataValues.interest },
+                  {
+                    where: { phone: chat.id.user },
+                  }
+                ).then(async () => {
+                  io.emit("customers", await newCustomer());
+                });
               }
             }
-
-            if (Bots[i].dataValues.interest !== "") {
-              console.log("HHHHHHHHHHHHHHHH");
-              console.log(Bots[i].dataValues.interest);
-              await Customer.update(
-                { item: Bots[i].dataValues.interest },
+          } else {
+            const allMenuBots = await db.bots.findAll({
+              include: [
                 {
-                  where: { phone: chat.id.user },
+                  model: Keys,
+                  as: "key",
+                },
+                {
+                  model: Keys,
+                  as: "prevKey",
+                },
+                {
+                  model: Menu,
+                  as: "menuAktif",
+                },
+                {
+                  model: Menu,
+                  as: "prevMenu",
+                },
+                {
+                  model: Menu,
+                  as: "afterMenu",
+                },
+                {
+                  model: UriFile,
+                  as: "urifiles",
+                },
+                {
+                  model: db.botContact,
+                  as: "botcontact",
+                  include: [
+                    {
+                      model: db.sales,
+                      as: "sales",
+                    },
+                  ],
+                },
+              ],
+              where: { id_key: IsKey.dataValues.id, id_menuAktif: 33 },
+              order: [["id", "ASC"]],
+            });
+
+            if (allMenuBots.length < 1) {
+              const kata =
+                "Maaf vika tidak menemukan kata kunci yang kamu masukan. \r\nSilahkan pilih menu diatas atau ketik *.home* untuk kembali ke halaman utama 🙏🏻";
+              msg.reply(kata);
+            }
+          }
+
+          // All Menu
+          const allMenuBots = await db.bots.findAll({
+            include: [
+              {
+                model: Keys,
+                as: "key",
+              },
+              {
+                model: Keys,
+                as: "prevKey",
+              },
+              {
+                model: Menu,
+                as: "menuAktif",
+              },
+              {
+                model: Menu,
+                as: "prevMenu",
+              },
+              {
+                model: Menu,
+                as: "afterMenu",
+              },
+              {
+                model: UriFile,
+                as: "urifiles",
+              },
+              {
+                model: db.botContact,
+                as: "botcontact",
+                include: [
+                  {
+                    model: db.sales,
+                    as: "sales",
+                  },
+                ],
+              },
+            ],
+            where: { id_key: IsKey.dataValues.id, id_menuAktif: 33 },
+            order: [["id", "ASC"]],
+          });
+
+          if (allMenuBots.length > 0) {
+            for (var i = 0; i < allMenuBots.length; i++) {
+              const newAllMsg = allMenuBots[i].dataValues.message.replace(
+                "{name}",
+                isResult[0].dataValues.name
+              );
+              if (newAllMsg !== "") {
+                msg.reply(newAllMsg);
+              }
+              if (allMenuBots[i].dataValues.forward) {
+                const forwardAllBot = await db.bots.findAll({
+                  include: [
+                    {
+                      model: Keys,
+                      as: "key",
+                    },
+                    {
+                      model: Keys,
+                      as: "prevKey",
+                    },
+                    {
+                      model: Menu,
+                      as: "menuAktif",
+                    },
+                    {
+                      model: Menu,
+                      as: "prevMenu",
+                    },
+                    {
+                      model: Menu,
+                      as: "afterMenu",
+                    },
+                    {
+                      model: UriFile,
+                      as: "urifiles",
+                    },
+                    {
+                      model: db.botContact,
+                      as: "botcontact",
+                      include: [
+                        {
+                          model: db.sales,
+                          as: "sales",
+                        },
+                      ],
+                    },
+                  ],
+                  where: {
+                    id_menuAktif: allMenuBots[i].dataValues.id_prevMenu,
+                    id_key: allMenuBots[i].dataValues.id_prevKey,
+                  },
+                });
+                const newMsgAllForward =
+                  forwardAllBot[0].dataValues.message.replace(
+                    "{name}",
+                    isResult[0].dataValues.name
+                  );
+                if (newMsgAllForward !== "") {
+                  msg.reply(newMsgAllForward);
                 }
-              ).then(async () => {
+
+                if (forwardAllBot[0].dataValues.urifiles.length > 0) {
+                  for (
+                    let b = 0;
+                    b < forwardAllBot[0].dataValues.urifiles.length;
+                    b++
+                  ) {
+                    const mediaAll = await MessageMedia.fromUrl(
+                      forwardAllBot[0].dataValues.urifiles[b].name
+                    );
+                    chat.sendMessage(mediaAll);
+                  }
+                }
+              }
+
+              if (allMenuBots[i].dataValues.urifiles.length > 0) {
+                for (
+                  let j = 0;
+                  j < allMenuBots[i].dataValues.urifiles.length;
+                  j++
+                ) {
+                  const media2all = await MessageMedia.fromUrl(
+                    allMenuBots[i].dataValues.urifiles[j].name
+                  );
+                  chat.sendMessage(media2all);
+                }
+              }
+              const updateCustomerAll = {
+                id_menuAktif: allMenuBots[i].id_afterMenu,
+                id_prevMenu: allMenuBots[i].id_prevMenu,
+                id_prevKey: allMenuBots[i].id_prevKey,
+              };
+              await Customer.update(updateCustomerAll, {
+                where: { phone: chat.id.user },
+              }).then(async () => {
                 io.emit("customers", await newCustomer());
               });
             }
           }
+
+          // // FORWARD KONTAK
+          // const salesGroup = await db.salesGroup.findOne({
+          //   where: { id: 7 },
+          //   include: [
+          //     {
+          //       model: db.sales,
+          //       as: "sales",
+          //     },
+          //   ],
+          // });
+          // if (salesGroup !== null) {
+          //   if (salesGroup.dataValues.sales.length > 0) {
+          //     for (let k = 0; k < salesGroup.dataValues.sales.length; k++) {
+          //       // Kirim pesan & kontak customer ke sales
+          //       const number = salesGroup.dataValues.sales[k].dataValues.phone;
+          //       const chatId = "62" + number.substring(1) + "@c.us";
+          //       let contactin = await client.getContactById(chatId);
+          //       msg.reply(contactin);
+          //       // let statusContact = await client.isRegisteredUser(chatId);
+          //       // Kirim pesan dan komtak sales ke Customer
+          //       // Kirim kontak customer ke sales
+          //       client.sendMessage(
+          //         phoneNumberFormatter(number),
+          //         await msg.getContact()
+          //       );
+          //       //End Kirim kontak customer ke sales
+          //     }
+          //   }
+          // }
+          // // END FORWARD KONTAK
+        } else {
+          const kata =
+            "Maaf vika tidak menemukan kata kunci yang kamu masukan. \r\nSilahkan pilih menu diatas atau ketik *.home* untuk kembali ke halaman utama 🙏🏻";
+          msg.reply(kata);
         }
-
-        // All Menu
-        const allMenuBots = await db.bots.findAll({
-          include: [
-            {
-              model: Keys,
-              as: "key",
-            },
-            {
-              model: Keys,
-              as: "prevKey",
-            },
-            {
-              model: Menu,
-              as: "menuAktif",
-            },
-            {
-              model: Menu,
-              as: "prevMenu",
-            },
-            {
-              model: Menu,
-              as: "afterMenu",
-            },
-            {
-              model: UriFile,
-              as: "urifiles",
-            },
-            {
-              model: db.botContact,
-              as: "botcontact",
-              include: [
-                {
-                  model: db.sales,
-                  as: "sales",
-                },
-              ],
-            },
-          ],
-          where: { id_key: IsKey.dataValues.id, id_menuAktif: 33 },
-          order: [["id", "ASC"]],
-        });
-
-        if (allMenuBots.length > 0) {
-          for (var i = 0; i < allMenuBots.length; i++) {
-            const newAllMsg = allMenuBots[i].dataValues.message.replace(
-              "{name}",
-              isResult[0].dataValues.name
-            );
-            if (newAllMsg !== "") {
-              msg.reply(newAllMsg);
-            }
-            if (allMenuBots[i].dataValues.forward) {
-              const forwardAllBot = await db.bots.findAll({
-                include: [
-                  {
-                    model: Keys,
-                    as: "key",
-                  },
-                  {
-                    model: Keys,
-                    as: "prevKey",
-                  },
-                  {
-                    model: Menu,
-                    as: "menuAktif",
-                  },
-                  {
-                    model: Menu,
-                    as: "prevMenu",
-                  },
-                  {
-                    model: Menu,
-                    as: "afterMenu",
-                  },
-                  {
-                    model: UriFile,
-                    as: "urifiles",
-                  },
-                  {
-                    model: db.botContact,
-                    as: "botcontact",
-                    include: [
-                      {
-                        model: db.sales,
-                        as: "sales",
-                      },
-                    ],
-                  },
-                ],
-                where: {
-                  id_menuAktif: allMenuBots[i].dataValues.id_prevMenu,
-                  id_key: allMenuBots[i].dataValues.id_prevKey,
-                },
-              });
-              const newMsgAllForward =
-                forwardAllBot[0].dataValues.message.replace(
-                  "{name}",
-                  isResult[0].dataValues.name
-                );
-              if (newMsgAllForward !== "") {
-                msg.reply(newMsgAllForward);
-              }
-
-              if (forwardAllBot[0].dataValues.urifiles.length > 0) {
-                for (
-                  let b = 0;
-                  b < forwardAllBot[0].dataValues.urifiles.length;
-                  b++
-                ) {
-                  const mediaAll = await MessageMedia.fromUrl(
-                    forwardAllBot[0].dataValues.urifiles[b].name
-                  );
-                  chat.sendMessage(mediaAll);
-                }
-              }
-            }
-
-            if (allMenuBots[i].dataValues.urifiles.length > 0) {
-              for (
-                let j = 0;
-                j < allMenuBots[i].dataValues.urifiles.length;
-                j++
-              ) {
-                const media2all = await MessageMedia.fromUrl(
-                  allMenuBots[i].dataValues.urifiles[j].name
-                );
-                chat.sendMessage(media2all);
-              }
-            }
-            const updateCustomerAll = {
-              id_menuAktif: allMenuBots[i].id_afterMenu,
-              id_prevMenu: allMenuBots[i].id_prevMenu,
-              id_prevKey: allMenuBots[i].id_prevKey,
-            };
-            await Customer.update(updateCustomerAll, {
-              where: { phone: chat.id.user },
-            }).then(async () => {
-              io.emit("customers", await newCustomer());
-            });
-          }
-        }
-
-        // // FORWARD KONTAK
-        // const salesGroup = await db.salesGroup.findOne({
-        //   where: { id: 7 },
-        //   include: [
-        //     {
-        //       model: db.sales,
-        //       as: "sales",
-        //     },
-        //   ],
-        // });
-        // if (salesGroup !== null) {
-        //   if (salesGroup.dataValues.sales.length > 0) {
-        //     for (let k = 0; k < salesGroup.dataValues.sales.length; k++) {
-        //       // Kirim pesan & kontak customer ke sales
-        //       const number = salesGroup.dataValues.sales[k].dataValues.phone;
-        //       const chatId = "62" + number.substring(1) + "@c.us";
-        //       let contactin = await client.getContactById(chatId);
-        //       msg.reply(contactin);
-        //       // let statusContact = await client.isRegisteredUser(chatId);
-        //       // Kirim pesan dan komtak sales ke Customer
-        //       // Kirim kontak customer ke sales
-        //       client.sendMessage(
-        //         phoneNumberFormatter(number),
-        //         await msg.getContact()
-        //       );
-        //       //End Kirim kontak customer ke sales
-        //     }
-        //   }
-        // }
-        // // END FORWARD KONTAK
       }
 
       // Ganti nama dan kota
       if (userTyping.substring(0, 1) == "#") {
         updateValue = {
-          name: userTyping.substring(1, index_),
-          kota: userTyping.substring(index_ + 1, 255),
+          name: userTyping.substring(1, 255),
+          // kota: userTyping.substring(index_ + 1, 255),
         };
         await Customer.update(updateValue, {
           where: { phone: chat.id.user },
@@ -560,10 +613,9 @@ const createSession = async (id) => {
         });
 
         msg.reply(
-          "Sekarang kami akan memanggil kamu : " +
-            userTyping.substring(1, index_)
+          "Sekarang kami akan memanggil kamu : " + userTyping.substring(1, 255)
         );
-        msg.reply("Kota  : " + userTyping.substring(index_ + 1, 255));
+        // msg.reply("Kota  : " + userTyping.substring(index_ + 1, 255));
       }
       // End Ganti Nama kota
 
