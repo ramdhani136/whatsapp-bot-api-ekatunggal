@@ -713,6 +713,7 @@ const init = async (socket) => {
           {
             model: db.sales,
             as: "sales",
+            include: [{ model: db.salesGroup, as: "group" }],
           },
         ],
       },
