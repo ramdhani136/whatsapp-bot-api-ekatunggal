@@ -41,6 +41,7 @@ const newBots = async () => {
           {
             model: db.sales,
             as: "sales",
+            include: [{ model: db.salesGroup, as: "group" }],
           },
         ],
       },
@@ -102,6 +103,7 @@ const getAllBots = async (req, res) => {
           {
             model: db.sales,
             as: "sales",
+            include: [{ model: db.salesGroup, as: "group" }],
           },
         ],
       },

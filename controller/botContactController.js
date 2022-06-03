@@ -5,6 +5,49 @@ const BotContact = db.botContact;
 const Sales = db.sales;
 const SalesGroup = db.salesGroup;
 
+const newBots = async () => {
+  return await db.bots.findAll({
+    include: [
+      {
+        model: db.keys,
+        as: "key",
+      },
+      {
+        model: db.keys,
+        as: "prevKey",
+      },
+      {
+        model: db.menu,
+        as: "menuAktif",
+      },
+      {
+        model: db.menu,
+        as: "prevMenu",
+      },
+      {
+        model: db.menu,
+        as: "afterMenu",
+      },
+      {
+        model: db.urifiles,
+        as: "urifiles",
+      },
+      {
+        model: BotContact,
+        as: "botcontact",
+        include: [
+          {
+            model: db.sales,
+            as: "sales",
+            include: [{ model: db.salesGroup, as: "group" }],
+          },
+        ],
+      },
+    ],
+    order: [["id_menuAktif", "ASC"]],
+  });
+};
+
 const getBotContact = async () => {
   return await BotContact.findAll({
     // include: [
@@ -82,8 +125,8 @@ const create = async (req, res) => {
   };
 
   const botContact = await BotContact.create(data);
-  req.socket.emit("botContact", await getBotContact());
-
+  // req.socket.emit("botContact", await getBotContact());
+  req.socket.emit("bots", await newBots());
   res.status(200).send(botContact);
 };
 
@@ -107,10 +150,18 @@ const deleteBotContact = async (req, res) => {
   res.status(200).send("botContact is deleted");
 };
 
+const deleteAllByBot = async (req, res) => {
+  let id = req.params.id;
+  await BotContact.destroy({ where: { id_bot: id } });
+  req.socket.emit("bots", await newBots());
+  res.status(200).send("contact is deleted");
+};
+
 module.exports = {
   create,
   getAllBotContact,
   getOneBotContact,
   updateBotContact,
   deleteBotContact,
+  deleteAllByBot,
 };

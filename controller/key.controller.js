@@ -4,12 +4,17 @@ const Keys = db.keys;
 // const UriFile = db.urifiles;
 // const Bots = db.bots;
 
+const newKeys = async () => {
+  return await Keys.findAll({ order: [["id", "ASC"]] });
+};
+
 const create = async (req, res) => {
   let data = {
     name: req.body.name,
   };
 
   const keys = await Keys.create(data);
+  req.socket.emit("keys", await newKeys());
   res.status(200).send(keys);
 };
 
@@ -29,12 +34,14 @@ const getOneKey = async (req, res) => {
 const updateKey = async (req, res) => {
   let id = req.params.id;
   const key = await Keys.update(req.body, { where: { id: id } });
+  req.socket.emit("keys", await newKeys());
   res.status(200).send(key);
 };
 
 const deleteKey = async (req, res) => {
   let id = req.params.id;
   await Keys.destroy({ where: { id: id } });
+  req.socket.emit("keys", await newKeys());
   res.status(200).send("keys is deleted");
 };
 

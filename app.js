@@ -743,6 +743,14 @@ const init = async (socket) => {
     order: [["name", "ASC"]],
   });
 
+  const AllKeys = await Keys.findAll({
+    order: [["id", "ASC"]],
+  });
+
+  const AllMenu = await Menu.findAll({
+    order: [["id", "ASC"]],
+  });
+
   if (session.length > 0) {
     if (socket) {
       socket.emit("init", session);
@@ -750,6 +758,8 @@ const init = async (socket) => {
       socket.emit("customers", Customer);
       socket.emit("sales", Sales);
       socket.emit("salesgroup", SalesGroup);
+      socket.emit("keys", AllKeys);
+      socket.emit("menus", AllMenu);
     } else {
       // Menambahkan data akun
       session.forEach((sess) => {
