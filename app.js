@@ -2,15 +2,14 @@ const {
   Client,
   MessageMedia,
   LocalAuth,
-  LegacySessionAuth,
+  // LegacySessionAuth,
 } = require("whatsapp-web.js");
 const express = require("express");
-const socketIO = require("socket.io");
 const qrcode = require("qrcode");
 const fs = require("fs");
 const http = require("http");
 const { phoneNumberFormatter } = require("./utils/formatter");
-const axios = require("axios");
+// const axios = require("axios");
 const cors = require("cors");
 const fileUpload = require("express-fileupload");
 const db = require("./models");
@@ -46,27 +45,6 @@ app.get("/", (req, res) => {
 });
 
 const createSession = async (id) => {
-  // const Session = db.sessions;
-  // const dataSession = await Session.findOne({ where: { id: id } });
-
-  // const client = new Client({
-  //   puppeteer: {
-  //     headless: true,
-  //     args: [
-  //       "--no-sandbox",
-  //       "--disable-setuid-sandbox",
-  //       "--disable-dev-shm-usage",
-  //       "--disable-accelerated-2d-canvas",
-  //       "--no-first-run",
-  //       "--no-zygote",
-  //       "--single-process",
-  //       "--disable-gpu",
-  //     ],
-  //   },
-  //   authStrategy: new LocalAuth({ clientId: id }),
-  // });
-
-  // const sessionSave = JSON.parse(dataSession.dataValues.session);
   const client = new Client({
     restartOnAuthFail: true,
     puppeteer: {
@@ -82,9 +60,6 @@ const createSession = async (id) => {
         "--disable-gpu",
       ],
     },
-    // authStrategy: new LegacySessionAuth({
-    //   session: sessionSave, // saved session object
-    // }),
     authStrategy: new LocalAuth({ clientId: id }),
   });
 
@@ -109,29 +84,16 @@ const createSession = async (id) => {
   client.on("authenticated", async (session) => {
     io.emit("authenticated", { id: id });
     io.emit("message", { id: id, text: "Whatsapp is authenticated!" });
-    // const data = { ready: 1, session: session };
-    // const Session = db.sessions;
-    // await Session.update(data, { where: { id: id } });
   });
 
   client.on("auth_failure", async (session) => {
     io.emit("message", { id: id, text: "Auth eror ,restarting..." });
-
-    // const data = { ready: 0, session: null };
-    // const Session = db.sessions;
-    // // updateSession(false, id, null);
-    // await Session.update(data, { where: { id: id } });
-
     client.destroy();
     client.initialize();
   });
 
   client.on("disconnected", async (reason) => {
     io.emit("message", { id: id, text: "Whatsapp is disconnected!" });
-    // const data = { ready: 0, session: null };
-    // const Session = db.sessions;
-    // await Session.update(data, { where: { id: id } });
-
     client.destroy();
     client.initialize();
   });
@@ -361,9 +323,25 @@ const createSession = async (id) => {
                 }
               }
 
-              if (Bots[i].dataValues.interest !== "") {
+              if (
+                Bots[i].dataValues.interest !== "" &&
+                Bots[i].dataValues.interest !== null
+              ) {
                 await Customer.update(
                   { item: Bots[i].dataValues.interest },
+                  {
+                    where: { phone: chat.id.user },
+                  }
+                ).then(async () => {
+                  io.emit("customers", await newCustomer());
+                });
+              }
+              if (
+                Bots[i].dataValues.city !== "" &&
+                Bots[i].dataValues.city !== null
+              ) {
+                await Customer.update(
+                  { kota: Bots[i].dataValues.city },
                   {
                     where: { phone: chat.id.user },
                   }
@@ -562,37 +540,6 @@ const createSession = async (id) => {
               });
             }
           }
-
-          // // FORWARD KONTAK
-          // const salesGroup = await db.salesGroup.findOne({
-          //   where: { id: 7 },
-          //   include: [
-          //     {
-          //       model: db.sales,
-          //       as: "sales",
-          //     },
-          //   ],
-          // });
-          // if (salesGroup !== null) {
-          //   if (salesGroup.dataValues.sales.length > 0) {
-          //     for (let k = 0; k < salesGroup.dataValues.sales.length; k++) {
-          //       // Kirim pesan & kontak customer ke sales
-          //       const number = salesGroup.dataValues.sales[k].dataValues.phone;
-          //       const chatId = "62" + number.substring(1) + "@c.us";
-          //       let contactin = await client.getContactById(chatId);
-          //       msg.reply(contactin);
-          //       // let statusContact = await client.isRegisteredUser(chatId);
-          //       // Kirim pesan dan komtak sales ke Customer
-          //       // Kirim kontak customer ke sales
-          //       client.sendMessage(
-          //         phoneNumberFormatter(number),
-          //         await msg.getContact()
-          //       );
-          //       //End Kirim kontak customer ke sales
-          //     }
-          //   }
-          // }
-          // // END FORWARD KONTAK
         } else {
           const kata =
             "Maaf vika tidak menemukan kata kunci yang kamu masukan. \r\nSilahkan pilih menu diatas atau ketik *.home* untuk kembali ke halaman utama 🙏🏻";
@@ -633,21 +580,6 @@ const createSession = async (id) => {
         msg.reply("Kamu memilih item  : " + userTyping.substring(1, 255));
       }
       // End
-
-      //Kirim kontak
-      // if ((msg.body = "$kontak" && !chat.isGroup)) {
-      //   var isContact = [...contact];
-      //   // isContact.number = "085700000000";
-      //   // isContact.verifiedName = "cobain doang";
-      //   // isContact.isBusiness = false;
-      //   // isContact.id.user = "085700000000";
-      //   // isContact.id._serialized = "085700000000@c.us";
-      //   console.log(isContact);
-      //   console.log(contact);
-      //   msg.reply(contact);
-      //   // msg.reply(isContact);
-      // }
-      // // End kirim kontak
     }
     // End AutoReply
   });

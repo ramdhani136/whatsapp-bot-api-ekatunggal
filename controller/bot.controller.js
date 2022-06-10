@@ -61,6 +61,7 @@ const create = async (req, res) => {
     status: req.body.status,
     forward: req.body.forward,
     interest: req.body.interest,
+    city: req.body.city,
   };
 
   const bots = await Bots.create(data);
