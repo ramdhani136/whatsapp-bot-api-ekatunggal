@@ -37,6 +37,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    sales_message: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
     forward: { type: DataTypes.BOOLEAN, defaultValue: 0 },
     status: { type: DataTypes.BOOLEAN, defaultValue: 1 },
   });

@@ -30,6 +30,7 @@ db.menu = require("./menuModel")(sequelize, DataTypes);
 db.sales = require("./salesModel")(sequelize, DataTypes);
 db.salesGroup = require("./salesGroupModel")(sequelize, DataTypes);
 db.botContact = require("./botContact")(sequelize, DataTypes);
+db.logcs = require("./logCs")(sequelize, DataTypes);
 
 db.sequelize.sync({ force: false }).then(() => {
   console.log("resync!");
@@ -111,6 +112,12 @@ db.salesGroup.hasMany(db.sales, {
 
 //  botContact
 db.botContact.belongsTo(db.sales, {
+  foreignKey: "id_sales",
+  as: "sales",
+});
+
+// logcs
+db.logcs.belongsTo(db.sales, {
   foreignKey: "id_sales",
   as: "sales",
 });

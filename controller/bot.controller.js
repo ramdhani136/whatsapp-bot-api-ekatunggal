@@ -58,6 +58,7 @@ const create = async (req, res) => {
     id_prevMenu: req.body.id_prevMenu,
     id_afterMenu: req.body.id_afterMenu,
     message: req.body.message,
+    sales_message: req.body.sales_message,
     status: req.body.status,
     forward: req.body.forward,
     interest: req.body.interest,

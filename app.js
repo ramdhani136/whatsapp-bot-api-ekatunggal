@@ -828,6 +828,7 @@ const menuRouter = require("./routes/menu");
 const salesRouter = require("./routes/sales");
 const salesGroupRouter = require("./routes/salesGroup");
 const botContactRouter = require("./routes/botContact");
+const logCsRouter = require("./routes/logCs");
 
 app.use(function (req, res, next) {
   req.socket = io;
@@ -843,6 +844,7 @@ app.use("/menu", menuRouter);
 app.use("/sales", salesRouter);
 app.use("/salesgroup", salesGroupRouter);
 app.use("/botContact", botContactRouter);
+app.use("/logcs", logCsRouter);
 
 // End
 
