@@ -745,29 +745,39 @@ const createSession = async (id) => {
             ],
           });
           if (lognya) {
-            const chatId =
-              "62" +
-              lognya.dataValues.sales.dataValues.phone.substring(1) +
-              "@c.us";
-            const salesContact = await client.getContactById(chatId);
-            if (salesContact.id.user === chat.id.user) {
-              // Update customer
-              await db.customers.update(
-                { name: newData[2] },
-                { where: { id: lognya.dataValues.id_customer } }
-              );
-              io.emit("customers", await newCustomer());
-              // End
-              // Update logcs
-              await db.logcs.update(
-                { status: 1, keterangan: newData[3] },
-                { where: { name: newData[1] } }
-              );
-              msg.reply("Laporannya sudah vika terima ya , terima kasih :) ");
-              // End
+            if (!lognya.dataValues.status) {
+              const chatId =
+                "62" +
+                lognya.dataValues.sales.dataValues.phone.substring(1) +
+                "@c.us";
+              const salesContact = await client.getContactById(chatId);
+              if (salesContact.id.user === chat.id.user) {
+                // Update customer
+                await db.customers.update(
+                  { name: newData[2] },
+                  { where: { id: lognya.dataValues.id_customer } }
+                );
+                io.emit("customers", await newCustomer());
+                // End
+                // Update logcs
+                await db.logcs.update(
+                  {
+                    status: 1,
+                    keterangan: newData[3],
+                    closeAt: new Date().toLocaleString(),
+                  },
+                  { where: { name: newData[1] } }
+                );
+                msg.reply("Laporannya sudah vika terima ya , terima kasih :) ");
+                // End
+              } else {
+                msg.reply(
+                  "Gagal, Case hanya bisa di close oleh no wa yang terdaftar untuk case tersebut kaka :) "
+                );
+              }
             } else {
               msg.reply(
-                "Gagal, Case hanya bisa di close oleh no wa yang terdaftar untuk case tersebut kaka :) "
+                "Tidak bisa mengupdate kembali laporan ,Case ini sudah di close oleh kaka sebelumnya :) "
               );
             }
           } else {
