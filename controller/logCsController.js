@@ -26,10 +26,8 @@ const create = async (req, res) => {
     interest: req.body.interest,
     closeAt: req.body.closeAt,
   };
-
-  const logcs = await LogCs.create(data);
-  // req.socket.emit("logcs", await newLog());
-  res.send(logcs);
+  const logCS = await db.logcs.create(data);
+  res.status(200).send(logCS);
 };
 
 const getAllLog = async (req, res) => {

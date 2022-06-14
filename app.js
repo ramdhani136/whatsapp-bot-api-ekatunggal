@@ -208,8 +208,31 @@ const createSession = async (id) => {
                 "{name}",
                 isResult[0].dataValues.name
               );
+
+              const newCity = newMsg.replace(
+                "{city}",
+                Bots[i].dataValues.city === null ||
+                  Bots[i].dataValues.city === ""
+                  ? isResult[0].dataValues.kota === null ||
+                    isResult[0].dataValues.kota === ""
+                    ? "Not Set"
+                    : isResult[0].dataValues.kota
+                  : Bots[i].dataValues.city
+              );
+
+              const newIntr = newCity.replace(
+                "{interest}",
+                Bots[i].dataValues.interest === null ||
+                  Bots[i].dataValues.interest === ""
+                  ? isResult[0].dataValues.item === null ||
+                    isResult[0].dataValues.item === ""
+                    ? "Not Set"
+                    : isResult[0].dataValues.item
+                  : Bots[i].dataValues.interest
+              );
+
               if (newMsg !== "") {
-                msg.reply(newMsg);
+                msg.reply(newIntr);
               }
               if (Bots[i].dataValues.forward) {
                 const forwardBot = await db.bots.findAll({
@@ -311,10 +334,89 @@ const createSession = async (id) => {
                     Bots[i].dataValues.botcontact[b].sales.dataValues.name;
                   let statusContact = await client.isRegisteredUser(chatId);
                   if (statusContact) {
+                    msg.reply(
+                      `Kontak : ${Bots[i].dataValues.botcontact[b].sales.dataValues.name}`
+                    );
                     msg.reply(contactin);
                   }
+
+                  const noReg = await db.logcs.findOne({
+                    order: [["name", "DESC"]],
+                  });
+
+                  if (noReg) {
+                    const reg = noReg.dataValues.name.substring(
+                      3,
+                      noReg.dataValues.name.length
+                    );
+
+                    var isReg = `sls${paddy(parseInt(reg) + 1, 5).toString()}`;
+                  }
+
+                  // CREATE LOGCS
+                  valueLog = {
+                    name: noReg ? isReg : "sls00001",
+                    id_sales:
+                      Bots[i].dataValues.botcontact[b].sales.dataValues.id,
+                    id_customer: IsCustomer.dataValues.id,
+                    city:
+                      Bots[i].dataValues.city === null ||
+                      Bots[i].dataValues.city === ""
+                        ? IsCustomer.dataValues.kota === null ||
+                          IsCustomer.dataValues.kota === ""
+                          ? "Not Set"
+                          : IsCustomer.dataValues.kota
+                        : Bots[i].dataValues.city,
+                    interest:
+                      Bots[i].dataValues.interest === null ||
+                      Bots[i].dataValues.interest === ""
+                        ? IsCustomer.dataValues.item === null ||
+                          IsCustomer.dataValues.item === ""
+                          ? "Not Set"
+                          : IsCustomer.dataValues.item
+                        : Bots[i].dataValues.interest,
+                  };
+                  console.log(valueLog);
+                  await db.logcs.create(valueLog).then((res) => {
+                    console.log(res.dataValues.name);
+                    client.sendMessage(
+                      phoneNumberFormatter(number),
+                      `Register Number : ${res.dataValues.name}`
+                    );
+                  });
+
+                  // END LOGCS
+
                   // End Kirim pesan & kontak sales ke customer
 
+                  if (Bots[i].dataValues.sales_message !== null) {
+                    const newMsg = Bots[i].dataValues.sales_message.replace(
+                      "{name}",
+                      isResult[0].dataValues.name
+                    );
+                    const newCity = newMsg.replace(
+                      "{city}",
+                      Bots[i].dataValues.city === null ||
+                        Bots[i].dataValues.city === ""
+                        ? isResult[0].dataValues.kota === null ||
+                          isResult[0].dataValues.kota === ""
+                          ? "Not Set"
+                          : isResult[0].dataValues.kota
+                        : Bots[i].dataValues.city
+                    );
+
+                    const newIntr = newCity.replace(
+                      "{interest}",
+                      Bots[i].dataValues.interest === null ||
+                        Bots[i].dataValues.interest === ""
+                        ? isResult[0].dataValues.item === null ||
+                          isResult[0].dataValues.item === ""
+                          ? "Not Set"
+                          : isResult[0].dataValues.item
+                        : Bots[i].dataValues.interest
+                    );
+                    client.sendMessage(phoneNumberFormatter(number), newIntr);
+                  }
                   client.sendMessage(
                     phoneNumberFormatter(number),
                     await msg.getContact()
@@ -447,8 +549,30 @@ const createSession = async (id) => {
                 "{name}",
                 isResult[0].dataValues.name
               );
+
+              const newAllCity = newAllMsg.replace(
+                "{city}",
+                allMenuBots[i].dataValues.city === null ||
+                  allMenuBots[i].dataValues.city === ""
+                  ? isResult[0].dataValues.kota === null ||
+                    isResult[0].dataValues.kota === ""
+                    ? "Not Set"
+                    : isResult[0].dataValues.kota
+                  : allMenuBots[i].dataValues.city
+              );
+
+              const newAllIntr = newAllCity.replace(
+                "{interest}",
+                allMenuBots[i].dataValues.interest === null ||
+                  allMenuBots[i].dataValues.interest === ""
+                  ? isResult[0].dataValues.item === null ||
+                    isResult[0].dataValues.item === ""
+                    ? "Not Set"
+                    : isResult[0].dataValues.item
+                  : allMenuBots[i].dataValues.interest
+              );
               if (newAllMsg !== "") {
-                msg.reply(newAllMsg);
+                msg.reply(newAllIntr);
               }
               if (allMenuBots[i].dataValues.forward) {
                 const forwardAllBot = await db.bots.findAll({
@@ -498,8 +622,31 @@ const createSession = async (id) => {
                     "{name}",
                     isResult[0].dataValues.name
                   );
+
+                const newAllCityForward = newMsgAllForward.replace(
+                  "{city}",
+                  forwardAllBot[0].dataValues.city === null ||
+                    forwardAllBot[0].dataValues.city === ""
+                    ? isResult[0].dataValues.kota === null ||
+                      isResult[0].dataValues.kota === ""
+                      ? "Not Set"
+                      : isResult[0].dataValues.kota
+                    : forwardAllBot[0].dataValues.city
+                );
+
+                const newAllIntrForward = newAllCityForward.replace(
+                  "{interest}",
+                  forwardAllBot[0].dataValues.interest === null ||
+                    forwardAllBot[0].dataValues.interest === ""
+                    ? isResult[0].dataValues.item === null ||
+                      isResult[0].dataValues.item === ""
+                      ? "Not Set"
+                      : isResult[0].dataValues.item
+                    : forwardAllBot[0].dataValues.interest
+                );
+
                 if (newMsgAllForward !== "") {
-                  msg.reply(newMsgAllForward);
+                  msg.reply(newAllIntrForward);
                 }
 
                 if (forwardAllBot[0].dataValues.urifiles.length > 0) {
@@ -547,7 +694,7 @@ const createSession = async (id) => {
         }
       }
 
-      // Ganti nama dan kota
+      // Ganti nama
       if (userTyping.substring(0, 1) == "#") {
         updateValue = {
           name: userTyping.substring(1, 255),
@@ -564,7 +711,7 @@ const createSession = async (id) => {
         );
         // msg.reply("Kota  : " + userTyping.substring(index_ + 1, 255));
       }
-      // End Ganti Nama kota
+      // End Ganti Nama
 
       // Input item dipilih
       if (userTyping.substring(0, 1) == "*") {
@@ -580,6 +727,59 @@ const createSession = async (id) => {
         msg.reply("Kamu memilih item  : " + userTyping.substring(1, 255));
       }
       // End
+
+      // Update status log sales
+      if (userTyping.substring(0, 5).toLowerCase() == "close") {
+        const newData = userTyping.split("_");
+        if (newData.length === 4) {
+          // const isCustomer = await db.customers.findOne({
+          //   where: { phone: chat.id.user },
+          // });
+          const lognya = await db.logcs.findOne({
+            where: { name: newData[1] },
+            include: [
+              {
+                model: db.sales,
+                as: "sales",
+              },
+            ],
+          });
+          if (lognya) {
+            const chatId =
+              "62" +
+              lognya.dataValues.sales.dataValues.phone.substring(1) +
+              "@c.us";
+            const salesContact = await client.getContactById(chatId);
+            if (salesContact.id.user === chat.id.user) {
+              // Update customer
+              await db.customers.update(
+                { name: newData[2] },
+                { where: { id: lognya.dataValues.id_customer } }
+              );
+              io.emit("customers", await newCustomer());
+              // End
+              // Update logcs
+              await db.logcs.update(
+                { status: 1, keterangan: newData[3] },
+                { where: { name: newData[1] } }
+              );
+              msg.reply("Laporannya sudah vika terima ya , terima kasih :) ");
+              // End
+            } else {
+              msg.reply(
+                "Gagal, Case hanya bisa di close oleh no wa yang terdaftar untuk case tersebut kaka :) "
+              );
+            }
+          } else {
+            msg.reply(
+              "Nomor Register tidak di ada di sistem kaka , Silahkan di cek ulang kembali :) "
+            );
+          }
+        } else {
+          msg.reply("Cek kembali format laporannya ya kaka :)");
+        }
+      }
+      // End Update status log sales
     }
     // End AutoReply
   });
@@ -829,6 +1029,7 @@ const salesRouter = require("./routes/sales");
 const salesGroupRouter = require("./routes/salesGroup");
 const botContactRouter = require("./routes/botContact");
 const logCsRouter = require("./routes/logCs");
+const { paddy } = require("./helper/paddy");
 
 app.use(function (req, res, next) {
   req.socket = io;
