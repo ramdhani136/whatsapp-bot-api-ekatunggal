@@ -122,4 +122,8 @@ db.logcs.belongsTo(db.sales, {
   as: "sales",
 });
 
+db.logcs.belongsTo(db.customers, {
+  foreignKey: "id_customer",
+  as: "customer",
+});
 module.exports = db;

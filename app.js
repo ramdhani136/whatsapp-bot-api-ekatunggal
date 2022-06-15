@@ -107,6 +107,15 @@ const createSession = async (id) => {
     const UriFile = db.urifiles;
     const Keys = db.keys;
     const Menu = db.menu;
+    const newlogs = async () => {
+      return await db.logcs.findAll({
+        include: [
+          { model: db.sales, as: "sales" },
+          { model: db.customers, as: "customer" },
+        ],
+      });
+    };
+
     const newCustomer = async () => {
       return await db.customers.findAll({
         order: [["id", "DESC"]],
@@ -376,9 +385,8 @@ const createSession = async (id) => {
                           : IsCustomer.dataValues.item
                         : Bots[i].dataValues.interest,
                   };
-                  console.log(valueLog);
-                  await db.logcs.create(valueLog).then((res) => {
-                    console.log(res.dataValues.name);
+                  await db.logcs.create(valueLog).then(async (res) => {
+                    io.emit("logcs", await newlogs());
                     client.sendMessage(
                       phoneNumberFormatter(number),
                       `Register Number : ${res.dataValues.name}`
@@ -494,9 +502,14 @@ const createSession = async (id) => {
               order: [["id", "ASC"]],
             });
 
-            if (allMenuBots.length < 1) {
+            if (
+              allMenuBots.length < 1 &&
+              userTyping.substring(0, 1) !== "#" &&
+              userTyping.substring(0, 1) !== "*" &&
+              userTyping.substring(0, 5) !== "close"
+            ) {
               const kata =
-                "Maaf vika tidak menemukan kata kunci yang kamu masukan. \r\nSilahkan pilih menu diatas atau ketik *.home* untuk kembali ke halaman utama 🙏🏻";
+                "Maaf vika tidak menemukan kata kunci yang kamu masukan. \r\nSilahkan pilih menu diatas atau ketik *home* untuk kembali ke halaman utama 🙏🏻";
               msg.reply(kata);
             }
           }
@@ -688,28 +701,42 @@ const createSession = async (id) => {
             }
           }
         } else {
-          const kata =
-            "Maaf vika tidak menemukan kata kunci yang kamu masukan. \r\nSilahkan pilih menu diatas atau ketik *.home* untuk kembali ke halaman utama 🙏🏻";
-          msg.reply(kata);
+          if (
+            userTyping.substring(0, 1) !== "#" &&
+            userTyping.substring(0, 1) !== "*" &&
+            userTyping.substring(0, 5) !== "close"
+          ) {
+            const kata =
+              "Maaf vika tidak menemukan kata kunci yang kamu masukan. \r\nSilahkan pilih menu diatas atau ketik *home* untuk kembali ke halaman utama 🙏🏻";
+            msg.reply(kata);
+          }
         }
       }
 
       // Ganti nama
       if (userTyping.substring(0, 1) == "#") {
-        updateValue = {
-          name: userTyping.substring(1, 255),
-          // kota: userTyping.substring(index_ + 1, 255),
-        };
-        await Customer.update(updateValue, {
-          where: { phone: chat.id.user },
-        }).then(async () => {
-          io.emit("customers", await newCustomer());
-        });
+        const sliceKata = userTyping.split("#");
+        console.log(sliceKata);
+        if (sliceKata[1] !== "") {
+          updateValue = {
+            name: userTyping.substring(1, 255),
+          };
+          await Customer.update(updateValue, {
+            where: { phone: chat.id.user },
+          }).then(async () => {
+            io.emit("customers", await newCustomer());
+            io.emit("logcs", await newlogs());
+          });
 
-        msg.reply(
-          "Sekarang kami akan memanggil kamu : " + userTyping.substring(1, 255)
-        );
-        // msg.reply("Kota  : " + userTyping.substring(index_ + 1, 255));
+          msg.reply(
+            "Sekarang kami akan memanggil kamu : " +
+              userTyping.substring(1, 255)
+          );
+        } else {
+          msg.reply(
+            "Gagal merubah nama, Silahkan cek kembali format penulisannya kaka :)"
+          );
+        }
       }
       // End Ganti Nama
 
@@ -732,9 +759,6 @@ const createSession = async (id) => {
       if (userTyping.substring(0, 5).toLowerCase() == "close") {
         const newData = userTyping.split("_");
         if (newData.length === 4) {
-          // const isCustomer = await db.customers.findOne({
-          //   where: { phone: chat.id.user },
-          // });
           const lognya = await db.logcs.findOne({
             where: { name: newData[1] },
             include: [
@@ -753,22 +777,36 @@ const createSession = async (id) => {
               const salesContact = await client.getContactById(chatId);
               if (salesContact.id.user === chat.id.user) {
                 // Update customer
-                await db.customers.update(
-                  { name: newData[2] },
-                  { where: { id: lognya.dataValues.id_customer } }
-                );
-                io.emit("customers", await newCustomer());
+                await db.customers
+                  .update(
+                    { name: newData[2] },
+                    { where: { id: lognya.dataValues.id_customer } }
+                  )
+                  .then(async (res) => {
+                    io.emit("customers", await newCustomer());
+                  });
+
                 // End
                 // Update logcs
-                await db.logcs.update(
-                  {
-                    status: 1,
-                    keterangan: newData[3],
-                    closeAt: new Date().toLocaleString(),
-                  },
-                  { where: { name: newData[1] } }
-                );
-                msg.reply("Laporannya sudah vika terima ya , terima kasih :) ");
+                await db.logcs
+                  .update(
+                    {
+                      status: 1,
+                      keterangan: newData[3],
+                      closeAt: new Date().toLocaleString(),
+                    },
+                    { where: { name: newData[1] } }
+                  )
+                  .then(async (res) => {
+                    io.emit("logcs", await newlogs());
+                    msg.reply(
+                      "Laporannya sudah vika terima ya , terima kasih :) "
+                    );
+                  })
+                  .catch((err) => {
+                    msg.reply("Gagal, Silahkan coba lagi :) ");
+                  });
+
                 // End
               } else {
                 msg.reply(
@@ -777,7 +815,7 @@ const createSession = async (id) => {
               }
             } else {
               msg.reply(
-                "Tidak bisa mengupdate kembali laporan ,Case ini sudah di close oleh kaka sebelumnya :) "
+                "Tidak bisa mengupdate kembali laporan ,Case ini sudah di close sebelumnya :) "
               );
             }
           } else {
@@ -893,6 +931,13 @@ const init = async (socket) => {
     order: [["id", "ASC"]],
   });
 
+  const logs = await db.logcs.findAll({
+    include: [
+      { model: db.sales, as: "sales" },
+      { model: db.customers, as: "customer" },
+    ],
+  });
+
   if (session.length > 0) {
     if (socket) {
       socket.emit("init", session);
@@ -902,6 +947,7 @@ const init = async (socket) => {
       socket.emit("salesgroup", SalesGroup);
       socket.emit("keys", AllKeys);
       socket.emit("menus", AllMenu);
+      socket.emit("logcs", logs);
     } else {
       // Menambahkan data akun
       session.forEach((sess) => {

@@ -27,6 +27,7 @@ const create = async (req, res) => {
     closeAt: req.body.closeAt,
   };
   const logCS = await db.logcs.create(data);
+  req.socket.emit("logcs", await newLog());
   res.status(200).send(logCS);
 };
 
@@ -58,14 +59,14 @@ const getByCust = async (req, res) => {
 const updateLog = async (req, res) => {
   let id = req.params.id;
   const logs = await LogCs.update(req.body, { where: { id: id } });
-  req.socket.emit("logs", await newLog());
+  req.socket.emit("logcs", await newLog());
   res.status(200).send(logs);
 };
 
 const deleteLog = async (req, res) => {
   let id = req.params.id;
   await LogCs.destroy({ where: { id: id } });
-  req.socket.emit("logs", await newLog());
+  req.socket.emit("logcs", await newLog());
   res.status(200).send("logs is deleted");
 };
 
