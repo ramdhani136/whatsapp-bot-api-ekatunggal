@@ -1,15 +1,19 @@
-const { Client, MessageMedia, LocalAuth } = require("whatsapp-web.js");
-
-const cookieParser = require("cookie-parser");
+const {
+  Client,
+  MessageMedia,
+  LocalAuth,
+  // LegacySessionAuth,
+} = require("whatsapp-web.js");
 const express = require("express");
 const qrcode = require("qrcode");
 const fs = require("fs");
 const http = require("http");
 const { phoneNumberFormatter } = require("./utils/formatter");
+// const axios = require("axios");
 const cors = require("cors");
 const fileUpload = require("express-fileupload");
 const db = require("./models");
-require("dotenv").config();
+
 const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
@@ -29,7 +33,6 @@ const corsOptions = {
   optionSuccessStatus: 200,
 };
 
-app.use(cookieParser());
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -1082,7 +1085,6 @@ const salesRouter = require("./routes/sales");
 const salesGroupRouter = require("./routes/salesGroup");
 const botContactRouter = require("./routes/botContact");
 const logCsRouter = require("./routes/logCs");
-const userRouter = require("./routes/users");
 const { paddy } = require("./helper/paddy");
 
 app.use(function (req, res, next) {
@@ -1100,7 +1102,6 @@ app.use("/sales", salesRouter);
 app.use("/salesgroup", salesGroupRouter);
 app.use("/botContact", botContactRouter);
 app.use("/logcs", logCsRouter);
-app.use("/users", userRouter);
 
 // End
 

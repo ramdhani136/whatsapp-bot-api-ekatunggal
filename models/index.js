@@ -31,6 +31,7 @@ db.sales = require("./salesModel")(sequelize, DataTypes);
 db.salesGroup = require("./salesGroupModel")(sequelize, DataTypes);
 db.botContact = require("./botContact")(sequelize, DataTypes);
 db.logcs = require("./logCs")(sequelize, DataTypes);
+db.users = require("./userModel")(sequelize, DataTypes);
 
 db.sequelize.sync({ force: false }).then(() => {
   console.log("resync!");
