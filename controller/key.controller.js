@@ -22,6 +22,7 @@ const getAllKeys = async (req, res) => {
   let keys = await Keys.findAll({
     order: [["name", "ASC"]],
   });
+  req.socket.emit("keys", await newKeys());
   res.send(keys);
 };
 

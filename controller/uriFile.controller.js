@@ -75,6 +75,8 @@ const getAllUri = async (req, res) => {
       },
     ],
   });
+  req.socket.emit("urifiles", newUrifile);
+  req.socket.emit("bots", await newBots());
   res.send(urifile);
 };
 

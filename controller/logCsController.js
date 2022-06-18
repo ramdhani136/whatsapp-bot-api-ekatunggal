@@ -7,10 +7,8 @@ const newLog = async () => {
   return await LogCs.findAll({
     order: [["id", "DESC"]],
     include: [
-      {
-        model: db.sales,
-        as: "sales",
-      },
+      { model: db.sales, as: "sales" },
+      { model: db.customers, as: "customer" },
     ],
   });
 };
@@ -32,7 +30,13 @@ const create = async (req, res) => {
 };
 
 const getAllLog = async (req, res) => {
-  let logs = await LogCs.findAll({ include: { model: db.sales, as: "sales" } });
+  let logs = await LogCs.findAll({
+    include: [
+      { model: db.sales, as: "sales" },
+      { model: db.customers, as: "customer" },
+    ],
+  });
+  req.socket.emit("logcs", await newLog());
   res.send(logs);
 };
 

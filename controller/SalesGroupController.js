@@ -33,6 +33,7 @@ const getAllSalesGroup = async (req, res) => {
     ],
     order: [["name", "ASC"]],
   });
+  req.socket.emit("salesgroup", await newSalesGroup());
   res.send(salesGroup);
 };
 

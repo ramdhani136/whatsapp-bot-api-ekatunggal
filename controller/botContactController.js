@@ -115,6 +115,7 @@ const getAllBotContact = async (req, res) => {
       // },
     ],
   });
+  req.socket.emit("botContact", await getBotContact());
   res.send(botContact);
 };
 
@@ -126,7 +127,7 @@ const create = async (req, res) => {
 
   const botContact = await BotContact.create(data);
   // req.socket.emit("botContact", await getBotContact());
-  req.socket.emit("bots", await newBots());
+  req.socket.emit("botContact", await getBotContact());
   res.status(200).send(botContact);
 };
 

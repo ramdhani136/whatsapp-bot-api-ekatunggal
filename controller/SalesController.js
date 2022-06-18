@@ -40,6 +40,7 @@ const getAllSales = async (req, res) => {
     ],
     order: [["name", "ASC"]],
   });
+  req.socket.emit("sales", await newSales());
   res.send(saless);
 };
 

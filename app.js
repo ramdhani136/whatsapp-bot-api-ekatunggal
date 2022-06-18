@@ -13,6 +13,8 @@ require("dotenv").config();
 const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
+const { verifyToken } = require("./middleware/VerifiyToken");
+
 const io = new Server(server, {
   cors: {
     origin: ["http://localhost:3000", "http://localhost:5000"],
@@ -938,13 +940,13 @@ const init = async (socket) => {
   if (session.length > 0) {
     if (socket) {
       socket.emit("init", session);
-      socket.emit("bots", bots);
-      socket.emit("customers", Customer);
-      socket.emit("sales", Sales);
-      socket.emit("salesgroup", SalesGroup);
-      socket.emit("keys", AllKeys);
-      socket.emit("menus", AllMenu);
-      socket.emit("logcs", logs);
+      // socket.emit("bots", bots);
+      // socket.emit("customers", Customer);
+      // socket.emit("sales", Sales);
+      // socket.emit("salesgroup", SalesGroup);
+      // socket.emit("keys", AllKeys);
+      // socket.emit("menus", AllMenu);
+      // socket.emit("logcs", logs);
     } else {
       // Menambahkan data akun
       session.forEach((sess) => {
@@ -1091,15 +1093,15 @@ app.use(function (req, res, next) {
 });
 
 app.use("/session", sessionRouter);
-app.use("/key", keyRouter);
-app.use("/urifiles", uriFileRouter);
-app.use("/bots", botRouter);
-app.use("/customer", customerRouter);
-app.use("/menu", menuRouter);
-app.use("/sales", salesRouter);
-app.use("/salesgroup", salesGroupRouter);
-app.use("/botContact", botContactRouter);
-app.use("/logcs", logCsRouter);
+app.use("/key", verifyToken, keyRouter);
+app.use("/urifiles", verifyToken, uriFileRouter);
+app.use("/bots", verifyToken, botRouter);
+app.use("/customer", verifyToken, customerRouter);
+app.use("/menu", verifyToken, menuRouter);
+app.use("/sales", verifyToken, salesRouter);
+app.use("/salesgroup", verifyToken, salesGroupRouter);
+app.use("/botContact", verifyToken, botContactRouter);
+app.use("/logcs", verifyToken, logCsRouter);
 app.use("/users", userRouter);
 
 // End

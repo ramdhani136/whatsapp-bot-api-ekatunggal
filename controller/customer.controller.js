@@ -60,6 +60,7 @@ const getAllCustomers = async (req, res) => {
       },
     ],
   });
+  req.socket.emit("customers", await newCustomer());
   res.send(customers);
 };
 

@@ -22,6 +22,7 @@ const getAllMenu = async (req, res) => {
   let menu = await Menu.findAll({
     order: [["name", "ASC"]],
   });
+  req.socket.emit("menus", await newMenu());
   res.send(menu);
 };
 

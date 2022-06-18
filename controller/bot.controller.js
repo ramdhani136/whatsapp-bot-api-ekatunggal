@@ -112,6 +112,8 @@ const getAllBots = async (req, res) => {
     ],
     order: [["id_menuAktif", "ASC"]],
   });
+  req.socket.emit("bots", await newBots());
+
   res.send(bots);
 };
 

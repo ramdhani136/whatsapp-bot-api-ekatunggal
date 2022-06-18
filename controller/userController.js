@@ -74,7 +74,7 @@ const login = async (req, res) => {
     });
     res.json({ accessToken });
   } catch (error) {
-    res.status(404).json({ status: false, msg: "User tidak di temukan" });
+    res.status(404).json({ status: false, msg: "User not found!" });
   }
 };
 
