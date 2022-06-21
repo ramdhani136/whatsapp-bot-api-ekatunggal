@@ -1,4 +1,10 @@
-const { Client, MessageMedia, LocalAuth } = require("whatsapp-web.js");
+const {
+  Client,
+  MessageMedia,
+  LocalAuth,
+  Location,
+  List,
+} = require("whatsapp-web.js");
 
 const cookieParser = require("cookie-parser");
 const express = require("express");
@@ -17,7 +23,11 @@ const { verifyToken } = require("./middleware/VerifiyToken");
 
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:5000"],
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5000",
+      "http://192.168.100.58:3000",
+    ],
     methods: ["GET", "POST"],
     transports: ["websocket", "polling", "flashsocket"],
     allowedHeaders: ["react-client"],
@@ -26,7 +36,11 @@ const io = new Server(server, {
 });
 
 const corsOptions = {
-  origin: ["http://localhost:3000", "http://localhost:5000"],
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:5000",
+    "http://192.168.100.58:3000",
+  ],
   credentials: true, //access-control-allow-credentials:true
   optionSuccessStatus: 200,
 };
@@ -63,7 +77,6 @@ const createSession = async (id) => {
   });
 
   client.initialize();
-
   client.on("qr", (qr) => {
     console.log(`QR RECEIVED ${qr}`);
     qrcode.toDataURL(qr, (err, url) => {
@@ -99,6 +112,26 @@ const createSession = async (id) => {
 
   // AutoReply
   client.on("message", async (msg) => {
+    // if (msg.type == "location") {
+    //   var location = new Location(
+    //     msg.location.latitude,
+    //     msg.location.longitude,
+    //     msg.location.description
+    //   );
+    //   msg.reply(location);
+    // }
+    // console.log(msg);
+    // let sections = [
+    //   {
+    //     title: "sectionTitle",
+    //     rows: [
+    //       { id: "customId", title: "ListItem1", description: "desc" },
+    //       { title: "ListItem2" },
+    //     ],
+    //   },
+    // ];
+    // let list = new List("aaa", "btnText", sections, "Title", "footer");
+    // msg.reply(list);
     const chat = await msg.getChat();
     const contact = await msg.getContact();
     const Customer = db.customers;
@@ -505,7 +538,7 @@ const createSession = async (id) => {
               allMenuBots.length < 1 &&
               userTyping.substring(0, 1) !== "#" &&
               userTyping.substring(0, 1) !== "*" &&
-              userTyping.substring(0, 5) !== "close"
+              userTyping.substring(0, 5).toLowerCase() !== "close"
             ) {
               const kata =
                 "Maaf vika tidak menemukan kata kunci yang kamu masukan. \r\nSilahkan pilih menu diatas atau ketik *home* untuk kembali ke halaman utama 🙏🏻";
@@ -703,7 +736,7 @@ const createSession = async (id) => {
           if (
             userTyping.substring(0, 1) !== "#" &&
             userTyping.substring(0, 1) !== "*" &&
-            userTyping.substring(0, 5) !== "close"
+            userTyping.substring(0, 5).toLowerCase() !== "close"
           ) {
             const kata =
               "Maaf vika tidak menemukan kata kunci yang kamu masukan. \r\nSilahkan pilih menu diatas atau ketik *home* untuk kembali ke halaman utama 🙏🏻";

@@ -4,11 +4,18 @@ const jwt = require("jsonwebtoken");
 
 const Users = db.users;
 
+const newUsers = async () => {
+  return await Users.findAll({
+    order: [["name", "ASC"]],
+  });
+};
+
 const getUsers = async (req, res) => {
   try {
     const users = await Users.findAll({
       attributes: ["id", "name", "username", "email", "status"],
     });
+    req.socket.emit("users", await newUsers());
     res.json(users);
   } catch (err) {
     res.json(err);
@@ -31,6 +38,7 @@ const register = async (req, res) => {
       username: username,
       password: hashPassword,
     });
+    req.socket.emit("users", await newUsers());
     res.status(200).send(user);
   } catch (error) {
     res.json(error);
