@@ -24,9 +24,9 @@ const { verifyToken } = require("./middleware/VerifiyToken");
 const io = new Server(server, {
   cors: {
     origin: [
-      "http://localhost:3000",
-      "http://localhost:5000",
-      "http://192.168.100.58:3000",
+      "http://103.56.149.31:3000",
+      "http://103.56.149.31:5000",
+      // "http://192.168.100.58:3000",
     ],
     methods: ["GET", "POST"],
     transports: ["websocket", "polling", "flashsocket"],
@@ -37,9 +37,9 @@ const io = new Server(server, {
 
 const corsOptions = {
   origin: [
-    "http://localhost:3000",
-    "http://localhost:5000",
-    "http://192.168.100.58:3000",
+    "http://103.56.149.31:3000",
+    "http://103.56.149.31:5000",
+    // "http://192.168.100.58:3000",
   ],
   credentials: true, //access-control-allow-credentials:true
   optionSuccessStatus: 200,
